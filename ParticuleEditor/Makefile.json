@@ -1,0 +1,65 @@
+{
+    "common": {
+        "is_library": false,
+        "clean": true,
+        "debug": false,
+        "include_engine": false,
+        "source_files": [],
+        "include_paths": [],
+        "library_paths": [],
+        "defines": {},
+        "output_file": "output",
+        "build_dir": "build",
+        "bin_dir": "bin",
+        "output_assets_dir": "assets",
+        "project_name": "MyApp",
+        "custom_makeconfig": []
+    },
+    "Casio.CG90": {
+        "output_file": "output",
+        "output_assets_dir": "assets",
+        "libraries": [],
+        "compile_flags": "",
+        "link_flags": "",
+        "assets_files": {
+            "textures": [],
+            "fonts": [],
+            "other": []
+        },
+        "inputs": {},
+        "display_name": "MyApp",
+        "icon_uns": "icon-uns.png",
+        "icon_sel": "icon-sel.png",
+        "memtrack": false
+    },
+    "Linux": {
+        "output_file": "output",
+        "output_assets_dir": "assets",
+        "assets_files": {
+            "textures": [],
+            "fonts": [],
+            "audio": [],
+            "other": []
+        },
+        "inputs": {},
+        "icon": "icons.png",
+        "console": false,
+        "lib_api": "SDL2"
+    },
+    "Windows": {
+        "output_file": "output",
+        "output_assets_dir": "assets",
+        "assets_files": {
+            "textures": [],
+            "fonts": [],
+            "audio": [],
+            "other": []
+        },
+        "inputs": {},
+        "icon": "icons.ico",
+        "console": false,
+        "architecture": "x64",
+        "lib_api": "SDL2",
+        "compiler": "MSVC"
+    }
+}
