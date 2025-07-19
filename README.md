@@ -44,7 +44,7 @@ Une documentation claire et dynamique est incluse :
 
 ```bash
 
-python ParticuleTools/Documentation/app.py  #puis ouvrez docs/index.html dans votre navigateur
+python ParticuleTools/Documentation/app.py  #puis ouvrez votre navigateur à l'url indiqué dans le terminal
 
 ```
 
