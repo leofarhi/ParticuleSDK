@@ -74,7 +74,6 @@ class AssetManagerCG(AssetManager):
 
     def _prepare_texture_assets(self, builtIn) -> None:
         asset_build = os.path.join(self.builder.build_dir, "assets")
-        external_asset_path = os.path.join(self.builder.bin_dir,self.builder.config_data["output_assets_dir"])
         os.makedirs(asset_build, exist_ok=True)
 
         if builtIn:
@@ -91,14 +90,7 @@ class AssetManagerCG(AssetManager):
                 if not texture["external"]:
                     continue
                 src = os.path.join(self.builder.project_path, texture["path"])
-                os.makedirs(external_asset_path, exist_ok=True)
-                dst = os.path.join(external_asset_path, str(self.current_id) + ".asset")
-                refactored_asset = RefactoredAsset("textures", texture, texture["reference_path"])
-                if not os.path.exists(src):
-                    print(f"[ERROR] Missing file: {src}")
-                    return None
-                self.refactored_assets.append(refactored_asset)
-                self.current_id += 1
+                dst = self._prepare_asset_path(src, "textures", texture)
                 profile = texture["format"]
                 if "rgb565" not in profile:
                     profile +="_rgb565"
