@@ -99,7 +99,11 @@ int main()
     if (value == EXIT_SUCCESS)
     {
         while (app.GetMainWindow() != nullptr) // Boucle tant que la fenêtre principale n'est pas nulle
+        {
             app.Update(); // Mettre à jour l'application
+            if (gint::keydown(gint::KEY_ACON) && app.GetMainWindow() != nullptr)
+                app.GetMainWindow()->Close();
+        }
     }
     Particule::Core::AssetManager::UnloadAll(); // Décharger toutes les ressources
     prof_leave_norec(Particule::Core::Time::m_startTime); // Quitter le système de minuterie

@@ -34,6 +34,7 @@ class MakefileGenerator:
         asset_lines = ""
         for cat in ("textures", "fonts", "other"):
             for asset in self.config["assets_files"].get(cat, []):
+                if cat == "textures" and asset["external"]: continue
                 ext = ".font" if cat == "fonts" else os.path.splitext(asset["path"])[1]
                 asset_lines += f"assets/{self.uuid_manager.get_uuid(asset['path'])}{ext}\n"
 

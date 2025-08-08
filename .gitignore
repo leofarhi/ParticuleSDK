@@ -214,3 +214,5 @@ __marimo__/
 **/build/
 /ParticuleCore/Distributions/Windows/Libs/SDL2_Project
 ParticuleCore/Distributions/Windows/Compiler/MSVC/config.json
+/ParticuleTools/Setup/tests
+debug.py
