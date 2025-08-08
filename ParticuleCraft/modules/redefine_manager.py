@@ -5,6 +5,7 @@ class RedefineManager:
     def __init__(self):
         self.includes: list[str] = [
             "<Particule/Core/Graphics/Image/Texture.hpp>",
+            "<Particule/Core/Graphics/Image/Sprite.hpp>",
             "<Particule/Core/Font/Font.hpp>",
             "<Particule/Core/System/Input.hpp>",
             "<Particule/Core/System/Basic.hpp>"

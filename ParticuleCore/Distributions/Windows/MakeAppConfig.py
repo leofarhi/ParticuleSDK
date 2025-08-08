@@ -20,6 +20,7 @@ class MakeAppConfig(Distribution):
             "textures": VarList(VarDict({
                 "path": VarPath("", "(*.png, *.jpg)", filetypes=[("Image Files", "*.png;*.jpg")]),
                 "reference_path": VarString("", "Reference path"),
+                "include_sprites": VarBool(False, "Include sprite sheets"),
             }), [], "Texture files"),
 
             "fonts": VarList(VarDict({

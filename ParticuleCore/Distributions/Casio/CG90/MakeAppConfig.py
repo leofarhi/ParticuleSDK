@@ -28,6 +28,7 @@ class MakeAppConfig(Distribution):
                 "format": VarEnum(["rgb565", "p8", "p4"], "rgb565", "Texture format"),
                 "alpha": VarBool(False, "Enable alpha channel"),
                 "external": VarBool(False, "Use external texture"),
+                "include_sprites": VarBool(False, "Include sprite sheets"),
             }),[], "Texture files"),
             "fonts": VarList(VarDict({
                 "path": VarPath("","(*.ttf, *.otf)", filetypes=[("Font Files", "*.ttf;*.otf")]),

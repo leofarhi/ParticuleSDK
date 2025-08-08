@@ -52,11 +52,11 @@ class HelpWindow(tk.Toplevel):
     TEXTS = {
         "fr": (
             "Aide de l'Éditeur de Sprites",
-            "\nContrôles :\n- Clic gauche : Créer une sélection\n- Clic molette : Déplacer la vue\n- Molette : Zoom\n- Clic droit : Supprimer un sprite\n- Shift + clic droit : Renommer un sprite\n- Shift + clic sur les poignées : Redimensionner un sprite\n\nFonctionnalités :\n- Sauvegarde/chargement JSON\n- Couleur de fond personnalisable"
+            "\nContrôles :\n- Clic gauche : Créer une sélection\n- Clic molette : Déplacer la vue\n- Molette : Zoom\n- Clic droit : Supprimer un sprite\n- Shift + clic droit : Renommer un sprite\n- Shift + clic sur les poignées : Redimensionner un sprite\n\nFonctionnalités :\n- Sauvegarde/chargement sprites\n- Couleur de fond personnalisable"
         ),
         "en": (
             "Sprite Editor Help",
-            "\nControls:\n- Left click: Create selection\n- Middle click: Move view\n- Scroll wheel: Zoom\n- Right click: Delete sprite\n- Shift + right click: Rename sprite\n- Shift + click on handles: Resize sprite\n\nFeatures:\n- Save/load JSON\n- Custom background color"
+            "\nControls:\n- Left click: Create selection\n- Middle click: Move view\n- Scroll wheel: Zoom\n- Right click: Delete sprite\n- Shift + right click: Rename sprite\n- Shift + click on handles: Resize sprite\n\nFeatures:\n- Save/load sprites\n- Custom background color"
         ),
     }
 
@@ -118,17 +118,17 @@ class SpriteEditor:
         self.root.bind_all("<KeyPress-Shift_R>", lambda e: self.set_shift(True))
         self.root.bind_all("<KeyRelease-Shift_R>", lambda e: self.set_shift(False))
 
-        menu_bar = tk.Menu(self.root)
-        file_menu = tk.Menu(menu_bar, tearoff=0)
-        file_menu.add_command(label="Charger Image", command=self.load_image)
-        file_menu.add_command(label="Importer JSON", command=self.import_json)
-        file_menu.add_command(label="Sauvegarder JSON", command=self.save_json)
-        file_menu.add_separator()
-        file_menu.add_command(label="Quitter", command=self.root.quit)
-        menu_bar.add_cascade(label="Fichier", menu=file_menu)
-        menu_bar.add_command(label="Couleur de fond", command=self.change_background_color)
-        menu_bar.add_command(label="Aide", command=lambda: HelpWindow(self.root))
-        self.root.config(menu=menu_bar)
+        self.menu_bar = tk.Menu(self.root)
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(label="Charger Image", command=self.load_image)
+        self.file_menu.add_command(label="Importer sprites", command=self.import_sprites)
+        self.file_menu.add_command(label="Sauvegarder sprites", command=self.save_sprites, state=tk.DISABLED if not self.image_path else tk.NORMAL)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Quitter", command=self.root.quit)
+        self.menu_bar.add_cascade(label="Fichier", menu=self.file_menu)
+        self.menu_bar.add_command(label="Couleur de fond", command=self.change_background_color)
+        self.menu_bar.add_command(label="Aide", command=lambda: HelpWindow(self.root))
+        self.root.config(menu=self.menu_bar)
 
     def mainloop(self):
         self.root.mainloop()
@@ -137,12 +137,14 @@ class SpriteEditor:
         self.shift_held = state
 
     def load_image(self):
-        path = filedialog.askopenfilename(filetypes=[("Images", "*.png;*.jpg;*.bmp")])
+        path = filedialog.askopenfilename(filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp")])
         if not path:
             return
         self.image_path = path
         self.image = Image.open(path).convert("RGBA")
         self.update_scaled_image()
+        #enabling the save button
+        self.file_menu.entryconfig("Sauvegarder sprites", state=tk.NORMAL)
 
     def update_scaled_image(self):
         if self.image:
@@ -277,8 +279,13 @@ class SpriteEditor:
                     surface.rectangle((cx - 3, cy - 3, cx + 3, cy + 3), outline="white")
 
         if self.drawing:
-            x1, y1 = self.start_pos
-            x2, y2 = inp.mouse_position()
+            x1, y1 = self.snap_to_grid(self.start_pos)
+            x2, y2 = self.snap_to_grid(inp.mouse_position())
+            #check if x2 et y2 sont plus grands que x1 et y1
+            if x2 < x1:
+                x1, x2 = x2, x1
+            if y2 < y1:
+                y1, y2 = y2, y1
             surface.rectangle([x1, y1, x2, y2], outline="cyan")
 
         mx, my = inp.mouse_position()
@@ -299,33 +306,33 @@ class SpriteEditor:
         surface.text(info_text, (10, self.canvas.winfo_height() - 20), self.font, color="white", stroke_width=1)
         surface.display()
 
-    def save_json(self):
+    def save_sprites(self):
         if not self.image_path:
             messagebox.showerror("Erreur", "Aucune image chargée.")
             return
-        path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
-        if path:
-            image_relative_path = os.path.relpath(self.image_path, os.path.dirname(path))
-            data = {"image": image_relative_path, "sprites": self.sprites}
-            with open(path, "w") as f:
-                json.dump(data, f, indent=4)
+        path = self.image_path + ".sprites"
+        with open(path, "w") as f:
+            json.dump(self.sprites, f, indent=4)
 
-    def import_json(self):
-        path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
+    def import_sprites(self):
+        path = filedialog.askopenfilename(filetypes=[("sprites files", "*.sprites")])
         if path:
             with open(path, "r") as f:
                 data = json.load(f)
-            if "image" in data and "sprites" in data:
-                image_path = os.path.join(os.path.dirname(path), data["image"])
-                if not os.path.exists(image_path):
-                    messagebox.showerror("Erreur", f"Image introuvable : {image_path}")
-                    return
-                self.image_path = image_path
-                self.image = Image.open(image_path).convert("RGBA")
-                self.update_scaled_image()
-                self.sprites = data["sprites"]
-            else:
-                messagebox.showerror("Erreur", "Format JSON invalide.")
+            image_path, _ = os.path.splitext(path)
+            if not os.path.exists(image_path):
+                messagebox.showerror("Erreur", f"Image introuvable : {image_path}")
+                return
+            self.image_path = image_path
+            self.image = Image.open(image_path).convert("RGBA")
+            self.update_scaled_image()
+            self.sprites = data
+            #enabling the save button
+            self.file_menu.entryconfig("Sauvegarder sprites", state=tk.NORMAL)
+
+    def snap_to_grid(self, screen_pos):
+        return self.world_to_screen(self.screen_to_world(screen_pos))
+
 
 if __name__ == "__main__":
     SpriteEditor().mainloop()
