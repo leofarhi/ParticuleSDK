@@ -1,5 +1,6 @@
 import os
 import shutil
+import json
 from ParticuleCraft.modules.asset_manager import AssetManager, RefactoredAsset
 from ParticuleCraft.utils.font_converter import convert_font_to_binary_file
 from ParticuleCraft.utils.multi_platform import GetPathLinux
@@ -70,8 +71,22 @@ class AssetManagerCG(AssetManager):
         self.refactored_assets.clear()
 
         # 1) Textures builtin (external == False) -> insert(0)
+        # 1)Textures external -> append (à la fin)
         for tex in self.builder.config_data["assets_files"].get("textures", []):
-            if not tex.get("external", False):
+            #sprites artificiels pour les builtin
+            if tex.get("include_sprites"):
+                sprites_path = os.path.join(self.builder.project_path, tex["path"] + ".sprites")
+                if os.path.exists(sprites_path):
+                    try:
+                        with open(sprites_path, "r", encoding="utf-8") as f:
+                            sprites_json = json.load(f)
+                        if isinstance(sprites_json, list):
+                            self._inject_sprites_from_json(tex, sprites_json)
+                    except Exception as e:
+                        print(f"[WARN] Invalid sprites file: {sprites_path} ({e})")
+            if tex.get("external", False):
+                self.refactored_assets.append(RefactoredAsset("textures", tex, tex.get("reference_path")))
+            else:
                 # Réserve/garantit un UUID (utile plus tard pour le build + metadata)
                 uuid = self.uuid_manager.add(tex["path"], "assets.textures")
                 # Liste pour metadata fxconv
@@ -84,13 +99,6 @@ class AssetManagerCG(AssetManager):
             # Garantit l'existence d'un UUID pour la police (même si on le re-récupère plus tard)
             self.uuid_manager.add(font["path"], "assets.fonts")
             self.refactored_assets.insert(0, RefactoredAsset("fonts", font, font.get("reference_path")))
-
-        # 3) Textures external -> append (à la fin)
-        for tex in self.builder.config_data["assets_files"].get("textures", []):
-            if tex.get("external", False):
-                self.refactored_assets.append(RefactoredAsset("textures", tex, tex.get("reference_path")))
-
-        # NB: Pas d'écriture de metadata/uuid ici ; ça part dans export_all()
 
     # --- Helpers internes spécifiques CG ---
 
@@ -161,12 +169,14 @@ class AssetManagerCG(AssetManager):
 
         for idx, asset in enumerate(self.refactored_assets):
             cat = asset.category
+            if cat == "sprites":
+                # Les sprites sont builtin
+                continue
             data = asset.data
             src = self._src_from_data(data)
 
             # Destination "indexée" (seulement pour les assets qu'on écrit dans output_assets_dir)
             dst_indexed = self._dst_path_for_index(idx)
-
             if cat == "textures":
                 if data.get("external", False):
                     # EXTERNAL: export dans l'output indexé

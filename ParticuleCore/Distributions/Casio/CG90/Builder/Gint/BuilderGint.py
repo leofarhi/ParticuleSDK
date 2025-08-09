@@ -44,9 +44,12 @@ class BuilderGint(Builder):
     def prepare_headers(self) -> None:
         redefine = RedefineManager()
         redefine.includes.append("<Particule/Core/System/gint.hpp>")
+        redefine.includes.append("<Particule/Core/System/References/Resource.hpp>")
         redefine.includes.append("<span>")
         redefine.additional_code_before += "typedef struct {\nuint32_t size;\nuint8_t *data;\n} __gint_lib_font_t;\n\n"
         for asset in self.asset_manager.refactored_assets:
+            if asset.category == "sprites":
+                redefine.asset_declarations.append(["Sprite", f"GetResourceID(\"{asset.data['texture']}\")",f"Rect({asset.data['x']}, {asset.data['y']}, {asset.data['w']}, {asset.data['h']})"])
             if asset.category == "textures":
                 if not asset.data["external"]:
                     uuid = self.uuid_manager.get_uuid(asset.data["path"])

@@ -25,6 +25,10 @@ class BuilderSDL2(Builder):
     def prepare_headers(self) -> None:
         redefine = RedefineManager()
         redefine.includes.append("<Particule/Core/System/sdl2.hpp>")
+        redefine.includes.append("<Particule/Core/System/References/Resource.hpp>")
+        for asset in self.asset_manager.refactored_assets:
+            if asset.category == "sprites":
+                redefine.asset_declarations.append(["Sprite", f"GetResourceID(\"{asset.data['texture']}\")",f"Rect({asset.data['x']}, {asset.data['y']}, {asset.data['w']}, {asset.data['h']})"])
         for k, v in self.config_data["inputs"].items():
             redefine.input_mappings.append((k, f"sdl2::{v}"))
         for idx, asset in enumerate(self.asset_manager.refactored_assets):

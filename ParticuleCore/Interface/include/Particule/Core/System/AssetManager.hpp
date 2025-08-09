@@ -25,6 +25,7 @@ struct AssetEntry {
 // --- AssetManager ---
 class AssetManager {
 private:
+    inline static bool initialized = false;
     inline static void** builtInAssets = nullptr;
     inline static uint32_t builtInAssetCount = 0;
     static inline AssetEntry externalAssets[EXTERNAL_ASSET_COUNT+1];
@@ -45,20 +46,26 @@ private:
 
 public:
     static void InitAssetManager() {
-        builtInAssets = __builtInAssetsRaw;
-        builtInAssetCount = 0;
-        while (builtInAssets[builtInAssetCount] != nullptr)
-            builtInAssetCount++;
-        for (auto& e : externalAssets) {
-            e.ptr = nullptr;
-            e.unload_fn = nullptr;
-            e.refCount = 0;
+        if (!initialized)
+        {
+            initialized = true;
+            builtInAssets = __builtInAssetsRaw;
+            builtInAssetCount = 0;
+            while (builtInAssets[builtInAssetCount] != nullptr)
+                builtInAssetCount++;
+            for (auto& e : externalAssets) {
+                e.ptr = nullptr;
+                e.unload_fn = nullptr;
+                e.refCount = 0;
+            }
         }
     }
 
     template<typename T>
     static void SetupLoaders(uint32_t id)
     {
+        assert(id != -1 && "Invalid Asset ID");
+        AssetManager::InitAssetManager();
         assert(id < builtInAssetCount + EXTERNAL_ASSET_COUNT && "Asset ID out of range");
         if (id < builtInAssetCount)
             return;
