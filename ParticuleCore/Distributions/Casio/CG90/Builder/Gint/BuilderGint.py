@@ -18,6 +18,7 @@ class BuilderGint(Builder):
 
     def prepare_assets(self) -> None:
         self.asset_manager.prepare_all()
+        self.asset_manager.export_all()
 
     def prepare_makefile(self) -> None:
         generator = MakefileGenerator(self)
@@ -47,17 +48,17 @@ class BuilderGint(Builder):
         redefine.additional_code_before += "typedef struct {\nuint32_t size;\nuint8_t *data;\n} __gint_lib_font_t;\n\n"
         for asset in self.asset_manager.refactored_assets:
             if asset.category == "textures":
-                if not asset.asset_data["external"]:
-                    uuid = self.uuid_manager.get_uuid(asset.asset_data["path"])
+                if not asset.data["external"]:
+                    uuid = self.uuid_manager.get_uuid(asset.data["path"])
                     redefine.additional_code_before += f"extern gint::image_t ___IMG_{uuid};\n"
                     img_type = "Texture"
-                    if "p8" in asset.asset_data["format"]:
+                    if "p8" in asset.data["format"]:
                         img_type += "P8"
-                    if "p4" in asset.asset_data["format"]:
+                    if "p4" in asset.data["format"]:
                         img_type += "P4"
                     redefine.asset_declarations.append([img_type, f"&___IMG_{uuid}"])
             if asset.category == "fonts":
-                uuid = self.uuid_manager.get_uuid(asset.asset_data["path"])
+                uuid = self.uuid_manager.get_uuid(asset.data["path"])
                 redefine.additional_code_before += f"extern __gint_lib_font_t ___FONT_{uuid};\n"
                 redefine.asset_declarations.append(["Font", f"std::span(___FONT_{uuid}.data, ___FONT_{uuid}.size)"])
         for k, v in self.config_data["inputs"].items():

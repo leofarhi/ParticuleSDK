@@ -2,7 +2,6 @@
 #define ASSET_MANAGER_HPP
 
 #include <Particule/Core/System/Redefine.hpp>
-#include <span>
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -12,7 +11,7 @@
 #include <memory>
 
 namespace Particule::Core {
-    using namespace Particule::Core::Resources;
+    extern void* __builtInAssetsRaw[];
 
 
 struct AssetEntry {
@@ -26,7 +25,8 @@ struct AssetEntry {
 // --- AssetManager ---
 class AssetManager {
 private:
-    static inline std::span<void*> builtInAssets;
+    inline static void** builtInAssets = nullptr;
+    inline static uint32_t builtInAssetCount = 0;
     static inline AssetEntry externalAssets[EXTERNAL_ASSET_COUNT+1];
     static inline const char* externalAssetPath = EXTERNAL_ASSET_PATH;
 
@@ -45,7 +45,10 @@ private:
 
 public:
     static void InitAssetManager() {
-        builtInAssets = std::span<void*>(__builtInAssetsRaw);
+        builtInAssets = __builtInAssetsRaw;
+        builtInAssetCount = 0;
+        while (builtInAssets[builtInAssetCount] != nullptr)
+            builtInAssetCount++;
         for (auto& e : externalAssets) {
             e.ptr = nullptr;
             e.unload_fn = nullptr;
@@ -56,10 +59,10 @@ public:
     template<typename T>
     static void SetupLoaders(uint32_t id)
     {
-        assert(id < (builtInAssets.size() - 1) + EXTERNAL_ASSET_COUNT && "Asset ID out of range");
-        if (id < (builtInAssets.size() - 1))
+        assert(id < builtInAssetCount + EXTERNAL_ASSET_COUNT && "Asset ID out of range");
+        if (id < builtInAssetCount)
             return;
-        size_t extID = id - (builtInAssets.size() - 1);
+        size_t extID = id - builtInAssetCount;
         assert(extID < EXTERNAL_ASSET_COUNT && "External Asset ID out of range");
         AssetEntry* entry = &externalAssets[extID];
         entry->load_fn = &load_external_asset<T>;
@@ -69,10 +72,10 @@ public:
     template<typename T>
     static T* Load(uint32_t id) {
         if (id == uint32_t(-1)) return nullptr;
-        if (id < (builtInAssets.size() - 1))
+        if (id < builtInAssetCount)
             return static_cast<T*>(builtInAssets[id]);
 
-        size_t extID = id - (builtInAssets.size() - 1);
+        size_t extID = id - builtInAssetCount;
         auto& entry = externalAssets[extID];
         if (!entry.ptr)
         {
@@ -85,27 +88,27 @@ public:
     template<typename T>
     static T** Get(uint32_t id) {
         if (id == uint32_t(-1)) return nullptr;
-        if (id < (builtInAssets.size() - 1))
+        if (id < builtInAssetCount)
             return reinterpret_cast<T**>(&builtInAssets[id]);
-        size_t extID = id - (builtInAssets.size() - 1);
+        size_t extID = id - builtInAssetCount;
         return reinterpret_cast<T**>(&externalAssets[extID].ptr);
     }
 
     static void IncrementRef(uint32_t id) {
-        if (id < (builtInAssets.size() - 1)) return;
-        externalAssets[id - (builtInAssets.size() - 1)].refCount++;
+        if (id < builtInAssetCount) return;
+        externalAssets[id - builtInAssetCount].refCount++;
     }
 
     static void DecrementRef(uint32_t id) {
-        if (id < (builtInAssets.size() - 1)) return;
-        auto& entry = externalAssets[id - (builtInAssets.size() - 1)];
+        if (id < builtInAssetCount) return;
+        auto& entry = externalAssets[id - builtInAssetCount];
         --entry.refCount;
     }
 
     static void Unload(uint32_t id)
     {
-        if (id < (builtInAssets.size() - 1)) return;
-        auto& entry = externalAssets[id - (builtInAssets.size() - 1)];
+        if (id < builtInAssetCount) return;
+        auto& entry = externalAssets[id - builtInAssetCount];
         if (entry.ptr && entry.unload_fn) {
             entry.unload_fn(entry.ptr);
             entry.ptr = nullptr;
@@ -113,12 +116,12 @@ public:
     }
 
     static void LoadUsed() {
-        uint32_t extID = (builtInAssets.size() - 1);
+        uint32_t extID = builtInAssetCount;
         for (auto& entry : externalAssets) {
             if (entry.refCount > 0 && !entry.ptr && entry.load_fn)
                 entry.ptr = entry.load_fn(extID);
             extID++;
-            assert(extID < (builtInAssets.size() - 1) + EXTERNAL_ASSET_COUNT);
+            assert(extID < builtInAssetCount + EXTERNAL_ASSET_COUNT);
         }
     }
 
@@ -142,8 +145,8 @@ public:
     }
 
     static bool IsLoaded(uint32_t id) {
-        if (id < (builtInAssets.size() - 1)) return true;
-        return externalAssets[id - (builtInAssets.size() - 1)].ptr != nullptr;
+        if (id < builtInAssetCount) return true;
+        return externalAssets[id - builtInAssetCount].ptr != nullptr;
     }
 };
 

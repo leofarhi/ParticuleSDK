@@ -20,6 +20,7 @@ class BuilderSDL2(Builder):
 
     def prepare_assets(self) -> None:
         self.asset_manager.prepare_all()
+        self.asset_manager.export_all()
 
     def prepare_headers(self) -> None:
         redefine = RedefineManager()

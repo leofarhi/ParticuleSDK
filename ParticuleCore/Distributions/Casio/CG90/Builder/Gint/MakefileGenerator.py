@@ -16,6 +16,7 @@ class MakefileGenerator:
 
     def generate_makefile(self) -> None:
         source_files = [GetPathLinux(normalize_path(f)) for f in self.config["source_files"]]
+        source_files.append(GetPathLinux(normalize_path(os.path.join(self.build_dir, "Resources.cpp"))))
         include_paths = [GetPathLinux(normalize_path(p)) for p in self.config["include_paths"]]
         library_paths = [GetPathLinux(normalize_path(p)) for p in self.config["library_paths"]]
         libraries = " ".join(self.config["libraries"])

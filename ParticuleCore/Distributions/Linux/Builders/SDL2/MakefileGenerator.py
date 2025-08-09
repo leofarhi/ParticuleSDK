@@ -79,6 +79,7 @@ $(EXEC): $(OBJS)
 
     def _collect_source_files(self) -> List[str]:
         collected = []
+        collected.append(os.path.join(self.build_dir, "Resources.cpp"))
 
         sdl_src = os.path.join(self.distribution_path, "Sources", "SDL2", "src")
         for root, _, files in os.walk(sdl_src):

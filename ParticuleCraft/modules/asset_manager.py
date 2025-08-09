@@ -3,56 +3,95 @@ import shutil
 from ParticuleCraft.utils.font_converter import convert_font_to_binary_file
 
 class RefactoredAsset:
-    def __init__(self, category, asset_data, reference_path):
+    def __init__(self, category, data, reference_path):
         self.category = category
-        self.asset_data = asset_data
+        self.data = data
         self.reference_path = reference_path
 
 
 class AssetManager:
     def __init__(self, builder):
         self.builder = builder
-        self.current_id = 0
-        self.refactored_assets:list[RefactoredAsset] = []
+        self.refactored_assets: list[RefactoredAsset] = []
 
-    def _prepare_asset_path(self, src, category, data) -> str:
-        dst = os.path.join(self.builder.bin_dir, self.builder.config_data["output_assets_dir"], str(self.current_id)+".asset")
-        refactored_asset = RefactoredAsset(category, data, data["reference_path"])
+    # --- PREPARE PHASE (ne touche pas au disque) ---
+
+    def _prepare_asset_entry(self, category: str, data: dict) -> None:
+        """Enregistre un asset à traiter plus tard par export_all."""
+        # On garde reference_path comme avant pour compat.
+        self.refactored_assets.append(
+            RefactoredAsset(category, data, data.get("reference_path"))
+        )
+
+    def _collect_category(self, category: str) -> None:
+        for asset in self.builder.config_data["assets_files"].get(category, []):
+            self._prepare_asset_entry(category, asset)
+
+    def _collect_fonts(self) -> None:
+        for font in self.builder.config_data["assets_files"].get("fonts", []):
+            self._prepare_asset_entry("fonts", font)
+
+    def prepare_all(self) -> None:
+        """Ne fait plus que remplir self.refactored_assets."""
+        self.refactored_assets.clear()
+        self._collect_category("textures")
+        self._collect_category("audio")
+        self._collect_category("other")
+        self._collect_fonts()
+
+    # --- EXPORT PHASE (écrit sur le disque) ---
+
+    def _dst_path_for_index(self, index: int) -> str:
+        out_dir = os.path.join(
+            self.builder.bin_dir, self.builder.config_data["output_assets_dir"]
+        )
+        os.makedirs(out_dir, exist_ok=True)
+        return os.path.join(out_dir, f"{index}.asset")
+
+    def _src_from_data(self, data: dict) -> str:
+        """Construit le chemin source à partir des données de config."""
+        return os.path.join(self.builder.project_path, data["path"])
+
+    def _copy_if_needed(self, src: str, dst: str) -> None:
         if not os.path.exists(src):
             print(f"[ERROR] Missing file: {src}")
-            return None
-        self.refactored_assets.append(refactored_asset)
-        self.current_id += 1
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        return dst
-
-    def _check_and_copy(self, src, category, data):
-        dst = self._prepare_asset_path(src, category, data)
-        if dst is None:
             return
-        if os.path.exists(dst) and open(src, "rb").read() == open(dst, "rb").read():
-            return
+        if os.path.exists(dst):
+            with open(src, "rb") as fsrc, open(dst, "rb") as fdst:
+                if fsrc.read() == fdst.read():
+                    return  # Rien à faire, déjà identique
         print(f"Copying asset: {src} → {dst}")
         shutil.copy(src, dst)
 
-    def prepare_all(self):
-        self._copy_category("textures")
-        self._copy_category("audio")
-        self._copy_category("other")
-        self._convert_fonts()
+    def export_all(self) -> None:
+        """
+        Parcourt self.refactored_assets et effectue les copies/conversions
+        vers {output_assets_dir}/{index}.asset
+        """
+        for idx, asset in enumerate(self.refactored_assets):
+            dst = self._dst_path_for_index(idx)
 
-    def _copy_category(self, category: str):
-        for asset in self.builder.config_data["assets_files"].get(category, []):
-            src = os.path.join(self.builder.project_path, asset["path"])
-            self._check_and_copy(src, category, asset)
+            if asset.category == "fonts":
+                data = asset.data
+                src = self._src_from_data(data)
 
-    def _convert_fonts(self):
-        for font in self.builder.config_data["assets_files"]["fonts"]:
-            src = os.path.join(self.builder.project_path, font["path"])
-            if font["resolution"] <= 0:
-                raise ValueError("Font resolution must be greater than 0.")
-            dst = self._prepare_asset_path(src, "fonts", font)
-            if dst is None:
-                continue
-            convert_font_to_binary_file(src, font["resolution"], dst, font["charset"])
-            print(f"Converted font: {src} → {dst}")
+                # Validation au moment de l’export
+                if data.get("resolution", 0) <= 0:
+                    print(f"[ERROR] Font resolution must be greater than 0. ({src})")
+                    continue
+                if not os.path.exists(src):
+                    print(f"[ERROR] Missing file: {src}")
+                    continue
+
+                convert_font_to_binary_file(
+                    src,
+                    data["resolution"],
+                    dst,
+                    data["charset"],
+                )
+                print(f"Converted font: {src} → {dst}")
+
+            else:
+                # Catégories "textures", "audio", "other" (et tout autre cas par défaut : copie)
+                src = self._src_from_data(asset.data)
+                self._copy_if_needed(src, dst)
