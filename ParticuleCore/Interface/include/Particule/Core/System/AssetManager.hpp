@@ -128,7 +128,6 @@ public:
             if (entry.refCount > 0 && !entry.ptr && entry.load_fn)
                 entry.ptr = entry.load_fn(extID);
             extID++;
-            assert(extID < builtInAssetCount + EXTERNAL_ASSET_COUNT);
         }
     }
 
@@ -147,8 +146,17 @@ public:
                 entry.unload_fn(entry.ptr);
                 entry.ptr = nullptr;
             }
-            entry.refCount = 0;
         }
+    }
+
+    static void ResetRefCount(uint32_t id) {
+        if (id < builtInAssetCount) return;
+        externalAssets[id - builtInAssetCount].refCount = 0;
+    }
+
+    static void ResetAllRefCounts() {
+        for (auto& entry : externalAssets)
+            entry.refCount = 0;
     }
 
     static bool IsLoaded(uint32_t id) {

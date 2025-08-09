@@ -38,6 +38,7 @@ namespace Particule::Core
         inline int _decodePixel_inline(int pixel) {
             return pixel;
         }
+        Texture(gint::image_t* img) : img(img), _alphaValue(gint::image_alpha(img->format)), isAllocated(false) {}
         Texture(gint::image_t* img, bool isAllocated) : img(img), _alphaValue(gint::image_alpha(img->format)), isAllocated(isAllocated) {}
         virtual ~Texture();
         inline int Width(){ return img->width; }
