@@ -28,7 +28,10 @@ class Distribution(Config):
         self.is_library = VarBool(is_library, "Is this a library?", common=True, private=True)
         self.clean = VarBool(True, "Clean the build directory before building", common=True)
         self.debug = VarBool(False, "Enable debug mode", common=True)
-        self.include_engine = VarBool(False, "Use the Engine", common=True)
+        self.packages = VarList(
+            VarString("", "Package name"), [],
+            "Packages to include in the build", common=True
+        )
 
         self.source_files = VarList(
             VarPath("", "(*.c, *.cpp, *.h)", filetypes=[("C/C++ Source Files", "*.c;*.cpp;*.h")]), [],
