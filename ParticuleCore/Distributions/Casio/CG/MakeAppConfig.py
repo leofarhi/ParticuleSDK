@@ -7,7 +7,7 @@ from .Builder.Gint.BuilderGint import BuilderGint
 class MakeAppConfig(Distribution):
     """
     MakeAppConfig est une configuration spécifique
-    pour construire une application Casio.CG90 avec des assets,
+    pour construire une application Casio.CG avec des assets,
     des entrées clavier et des options de build personnalisées.
 
     Exemple :
@@ -15,7 +15,7 @@ class MakeAppConfig(Distribution):
         app_config.load(json_config)
     """
     def __init__(self) -> None:
-        super().__init__("Casio.CG90", is_library=False)
+        super().__init__("Casio.CG", is_library=False)
         self.Keys = ["KEY_F1","KEY_F2","KEY_F3","KEY_F4","KEY_F5","KEY_F6","KEY_SHIFT","KEY_OPTN","KEY_VARS","KEY_MENU","KEY_LEFT","KEY_UP","KEY_ALPHA","KEY_SQUARE","KEY_POWER","KEY_EXIT","KEY_DOWN","KEY_RIGHT","KEY_XOT","KEY_LOG","KEY_LN","KEY_SIN","KEY_COS","KEY_TAN","KEY_FRAC","KEY_FD","KEY_LEFTP","KEY_RIGHTP","KEY_COMMA","KEY_ARROW","KEY_7","KEY_8","KEY_9","KEY_DEL","KEY_4","KEY_5","KEY_6","KEY_MUL","KEY_DIV","KEY_1","KEY_2","KEY_3","KEY_ADD","KEY_SUB","KEY_0","KEY_DOT","KEY_EXP","KEY_NEG","KEY_EXE","KEY_ACON","KEY_HELP","KEY_LIGHT","KEY_KBD","KEY_X","KEY_Y","KEY_Z","KEY_EQUALS","KEY_CLEAR","KEY_X2","KEY_CARET","KEY_SWITCH","KEY_LEFTPAR","KEY_RIGHTPAR","KEY_STORE","KEY_TIMES","KEY_PLUS","KEY_MINUS"]
 
         self.libraries = VarList(VarPath("","*.a", filetypes=[("Library Files", "*.a")]),[], "Libraries to link against")

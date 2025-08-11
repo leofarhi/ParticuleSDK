@@ -1,4 +1,4 @@
-from .working_dirs import package_path
+from .working_dirs import particulecraft_path
 import logging
 import sys, os
 
@@ -19,10 +19,10 @@ if not logger.hasHandlers():
     logger.addHandler(ch)
 
     #create __pycache__ directory if it doesn't exist
-    if not os.path.exists(os.path.join(package_path, "__pycache__")):
-        os.makedirs(os.path.join(package_path, "__pycache__"))
+    if not os.path.exists(os.path.join(particulecraft_path, "__pycache__")):
+        os.makedirs(os.path.join(particulecraft_path, "__pycache__"))
 
-    fh = logging.FileHandler( os.path.join(package_path,"__pycache__", "log.txt"), mode='w', encoding='utf-8')
+    fh = logging.FileHandler( os.path.join(particulecraft_path,"__pycache__", "log.txt"), mode='w', encoding='utf-8')
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)

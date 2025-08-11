@@ -78,8 +78,8 @@ def load_distributions():
         "MakeLibConfig.py",
     ]
 
-    if wd.api_path not in sys.path:
-        sys.path.append(wd.api_path)
+    if wd.sdk_path not in sys.path:
+        sys.path.append(wd.sdk_path)
     if os.path.dirname(wd.distributions_path) not in sys.path:
         sys.path.append(os.path.dirname(wd.distributions_path))
 
@@ -91,7 +91,7 @@ def load_distributions():
 
             # Chemin relatif de base_dir à root
             rel_path = os.path.relpath(root, base_dir)
-            # dist_name : style Windows, Linux, Casio.CG90, etc.
+            # dist_name : style Windows, Linux, Casio.CG, etc.
             dist_name = rel_path.replace(os.sep, ".")
 
             attrs = {}

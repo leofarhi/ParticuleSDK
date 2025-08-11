@@ -48,7 +48,9 @@ namespace Particule::Core
 
         FORCE_INLINE void Draw(int x, int y)
         {
-            texture->DrawSub(x, y, rect);
+            //texture->DrawSub(x, y, rect);
+            Rect subRect = Rect(rect.x, rect.y, rect.w > 0 ? rect.w : -rect.w, rect.h > 0 ? rect.h : -rect.h);
+            texture->DrawSubSize(x, y, rect.w, rect.h, subRect);
         }
 
         FORCE_INLINE void DrawSize(int x, int y, int w, int h)
@@ -58,7 +60,9 @@ namespace Particule::Core
 
         FORCE_INLINE void DrawColor(int x, int y, const Color& color)
         {
-            texture->DrawSubColor(x, y, rect, color);
+            //texture->DrawSubColor(x, y, rect, color);
+            Rect subRect = Rect(rect.x, rect.y, rect.w > 0 ? rect.w : -rect.w, rect.h > 0 ? rect.h : -rect.h);
+            texture->DrawSubSizeColor(x, y, rect.w, rect.h, subRect, color);
         }
 
         FORCE_INLINE void DrawSizeColor(int x, int y, int w, int h, const Color& color)

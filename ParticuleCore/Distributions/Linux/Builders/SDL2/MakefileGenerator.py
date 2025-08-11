@@ -72,8 +72,6 @@ $(EXEC): $(OBJS)
             os.path.join(self.distribution_path, "Sources", "SDL2", "include"),
             os.path.join(interface_path, "include")
         ]
-        if self.config["include_engine"]:
-            defaults.append(os.path.join(engine_path, "include"))
         all_dirs = defaults + self.include_paths
         return [GetPathLinux(normalize_path(p)) for p in all_dirs if os.path.isdir(p)]
 
@@ -86,13 +84,6 @@ $(EXEC): $(OBJS)
             for f in files:
                 if f.endswith((".cpp", ".c")):
                     collected.append(os.path.join(root, f))
-
-        if self.config["include_engine"]:
-            engine_src = os.path.join(engine_path, "src")
-            for root, _, files in os.walk(engine_src):
-                for file in files:
-                    if file.endswith((".cpp", ".c")):
-                        collected.append(os.path.join(root, file))
 
         for src in self.source_files:
             if os.path.exists(src):

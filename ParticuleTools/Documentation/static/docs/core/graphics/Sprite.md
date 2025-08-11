@@ -1,8 +1,5 @@
 # 🖼️ `Particule::Core::Sprite`
 
-> ⚠️ **Remarque temporaire** : Le chargement des `Sprite` via `AssetManager` ou `Asset<T>` avec la syntaxe `"image.png:nom"` **n'est pas encore pris en charge** automatiquement.  
-> Cette fonctionnalité sera ajoutée prochainement. En attendant, utilisez le constructeur manuel `Sprite(texture, rect)` ou `Texture::CreateSprite()`.
-
 La classe `Sprite` représente une **sous-région d'une texture** destinée à être rendue.  
 Elle permet d'extraire une portion d'une `Texture` (sprite sheet, atlas, etc.) et de la dessiner facilement à l'écran.
 

@@ -36,7 +36,7 @@ Ce bloc contient la configuration de base partagée entre toutes les distributio
 | `is_library`       | `bool`       | Compile le projet comme une bibliothèque. |
 | `clean`            | `bool`       | Vide le dossier de build avant compilation. |
 | `debug`            | `bool`       | Active le mode debug (si supporté). |
-| `include_engine`   | `bool`       | Inclut automatiquement ParticuleEngine. |
+| `packages`         | `list`       | Intégre automatiquement tous les paquets souhaités. |
 | `source_files`     | `list`       | Liste des fichiers source à compiler. |
 | `include_paths`    | `list`       | Répertoires à inclure pour le compilateur. |
 | `library_paths`    | `list`       | Répertoires à inclure pour l’éditeur de liens. |
@@ -100,10 +100,9 @@ Certaines distributions supportent une clé `inputs` pour remapper les touches c
     "is_library": false,
     "clean": true,
     "debug": false,
-    "include_engine": true,
+    "packages": [],
     "source_files": ["Sources/main.cpp"],
     "include_paths": ["Sources/include"],
-    "output_file": "my_app",
     "project_name": "MyApp",
     "custom_makeconfig": []
   },

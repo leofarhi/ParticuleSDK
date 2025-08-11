@@ -6,7 +6,9 @@ from typing import Any, Dict, List, Type
 from ..config.base import Config
 from ..config.fields import *
 from .custom_distribution_base import CustomDistribution
+from .package_base import Package
 from .builder_base import Builder
+from ..system import working_dirs as wd
 
 
 class Distribution(Config):
@@ -103,11 +105,42 @@ class Distribution(Config):
                         instance.set_builder(self, config)
                         self.custom_config.append(instance)
 
-    def call_custom(self, method_name: str) -> None:
+    def load_packages(self, builder) -> None:
+        package_availables = []
+        for package in os.listdir(wd.packages_path):
+            if os.path.isdir(os.path.join(wd.packages_path, package)):
+                if os.path.exists(os.path.join(wd.packages_path, package, "Package.py")):
+                    package_availables.append(package)
+        loaded_packages = []
+        for package_name in self.packages.to_data():
+            if package_name not in package_availables:
+                print(f"[WARNING] Package '{package_name}' not found.")
+                continue
+            package_path = os.path.join(wd.packages_path, package_name, "Package.py")
+            spec = importlib.util.spec_from_file_location(package_name, package_path)
+            if spec is None or spec.loader is None:
+                print(f"[ERROR] Failed to load spec for '{package_path}'.")
+                continue
+
+            module = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(module)  # type: ignore
+            except Exception as e:
+                print(f"[ERROR] Failed to import '{package_path}': {e}")
+                continue
+
+            # Trouve toutes les classes qui héritent de Package
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                if (obj.__module__ == module.__name__ and issubclass(obj, Package)):
+                    instance = obj(builder)
+                    loaded_packages.append(instance)
+        return loaded_packages
+
+    def call_custom(self, method_name: str, list_instances: list) -> None:
         """
         Appelle une méthode donnée sur toutes les configs custom chargées.
         """
-        for instance in self.custom_config:
+        for instance in list_instances:
             method = getattr(instance, method_name, None)
             if callable(method):
                 method()
@@ -137,17 +170,22 @@ class Distribution(Config):
         builder = self.generate_builder(makefile_path)
         if not isinstance(builder, Builder):
             raise TypeError("The builder must be an instance of BaseBuilder.")
-        self.call_custom("before_build")
+        packages = self.load_packages(builder)
+        for package in packages:
+            builder.config_data["source_files"].extend(package.src_files)
+            builder.config_data["include_paths"].extend(package.include_paths)
+        list_instances = self.custom_config + packages
+        self.call_custom("before_build", list_instances)
         builder.prepare_build()
-        self.call_custom("prepare_build")
+        self.call_custom("prepare_build", list_instances)
         builder.prepare_assets()
-        self.call_custom("prepare_assets")
+        self.call_custom("prepare_assets", list_instances)
         builder.prepare_headers()
-        self.call_custom("prepare_headers")
+        self.call_custom("prepare_headers", list_instances)
         builder.prepare_makefile()
-        self.call_custom("prepare_makefile")
+        self.call_custom("prepare_makefile", list_instances)
         builder.run_compilation()
-        self.call_custom("after_compilation")
+        self.call_custom("after_compilation", list_instances)
         builder.post_build()
-        self.call_custom("post_build")
+        self.call_custom("post_build", list_instances)
         return builder.success_check()

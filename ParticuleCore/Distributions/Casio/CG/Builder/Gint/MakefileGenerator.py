@@ -25,11 +25,6 @@ class MakefileGenerator:
         flags_link = self.config.get("link_flags", "")
         memtrack = "ON" if self.config.get("memtrack", False) else "OFF"
 
-        engine_src_RECURSE = ""
-        if self.config["include_engine"]:
-            include_paths.insert(0, GetPathLinux(os.path.join(engine_path, "include")))
-            engine_src_RECURSE = GetPathLinux(os.path.join(engine_path, "src"))+ "/*.cpp"
-
         local = GetPathLinux(self.builder.distribution_path)
 
         asset_lines = ""
@@ -62,7 +57,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE API_SRCS {local}/Sources/Gint/src/*.cpp {engine_src_RECURSE})
+file(GLOB_RECURSE API_SRCS {local}/Sources/Gint/src/*.cpp)
 set(SOURCES ${{API_SRCS}} {source_files_join})
 
 include_directories(

@@ -9,7 +9,7 @@ class MakeLibConfig(Distribution):
     """
 
     def __init__(self) -> None:
-        super().__init__("Casio.CG90", is_library=True)
+        super().__init__("Casio.CG", is_library=True)
         pass
 
     def validate(self) -> None:

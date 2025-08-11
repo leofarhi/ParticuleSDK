@@ -116,8 +116,6 @@ endlocal
             os.path.join(self.distribution_path, "Sources", "SDL2", "include"),
             os.path.join(interface_path, "include"),
         ]
-        if self.config["include_engine"]:
-            includes.append(os.path.join(engine_path, "include"))
         includes.extend(self.include_paths)
         return [normalize_path(p) for p in includes if os.path.isdir(p)]
 
@@ -129,13 +127,6 @@ endlocal
             for file in files:
                 if file.endswith((".cpp", ".c")):
                     all_files.append(os.path.join(root, file))
-
-        if self.config["include_engine"]:
-            engine_src = os.path.join(engine_path, "src")
-            for root, _, files in os.walk(engine_src):
-                for file in files:
-                    if file.endswith((".cpp", ".c")):
-                        all_files.append(os.path.join(root, file))
 
         for src in self.source_files:
             if os.path.exists(src):

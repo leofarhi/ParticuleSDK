@@ -3,21 +3,20 @@
         "is_library": false,
         "clean": true,
         "debug": false,
-        "include_engine": false,
+        "packages": [],
         "source_files": [
             "Sources/src/main.cpp"
         ],
         "include_paths": [],
         "library_paths": [],
         "defines": {},
-        "output_file": "output",
         "build_dir": "build",
         "bin_dir": "bin",
         "output_assets_dir": "assets",
         "project_name": "MyApp",
         "custom_makeconfig": []
     },
-    "Casio.CG90": {
+    "Casio.CG": {
         "output_file": "output",
         "output_assets_dir": "assets",
         "libraries": [],

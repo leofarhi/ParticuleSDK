@@ -217,4 +217,5 @@ ParticuleCore/Distributions/Windows/Compiler/MSVC/config.json
 /ParticuleTools/Setup/tests
 debug.py
 /ParticuleEditor
-/Packages
+/tests
+/Packages/ParticuleEngine/Examples/test

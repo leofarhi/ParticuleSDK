@@ -7,7 +7,7 @@ from .system.log import logger
 
 def main():
     #add the Api directory to the system path
-    sys.path.append(wd.api_path)
+    sys.path.append(wd.sdk_path)
     dm.load_distributions()
     parser = argparse.ArgumentParser(
         description="ParticuleEngine CLI"
