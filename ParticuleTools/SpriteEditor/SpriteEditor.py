@@ -83,9 +83,11 @@ class HelpWindow(tk.Toplevel):
         self.label_title.config(text=title)
         self.label_text.config(text=text)
 
+
 class SpriteEditor:
     def __init__(self):
         self.root = tk.Tk()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.geometry("800x600")
         self.root.title("Sprite Editor")
         self.canvas = SmartCanvas(self.root, callback=self.update_frame, bg_color=rgb_to_hex(BACKGROUND_COLORS["dark"]))
@@ -130,6 +132,10 @@ class SpriteEditor:
         self.menu_bar.add_command(label="Aide", command=lambda: HelpWindow(self.root))
         self.root.config(menu=self.menu_bar)
 
+    def on_closing(self):
+        if messagebox.askokcancel("Quitter", "Les données non sauvegardées seront perdues.\nÊtes-vous sûr de vouloir quitter ?"):
+            self.root.destroy()
+
     def mainloop(self):
         self.root.mainloop()
 
@@ -141,6 +147,11 @@ class SpriteEditor:
         if not path:
             return
         self.image_path = path
+        #verifier si l'image ne possède pas déjà un .sprites
+        if os.path.exists(path + ".sprites"):
+            #afficher un message d'avertissement et de confirmation
+            if not messagebox.askyesno("Avertissement", "Cette image possède déjà un fichier .sprites.\nVoulez-vous le remplacer ?"):
+                return
         self.image = Image.open(path).convert("RGBA")
         self.update_scaled_image()
         #enabling the save button
@@ -166,6 +177,13 @@ class SpriteEditor:
     def update_frame(self, canvas):
         inp = canvas.input
         surface = canvas.surface
+
+        if not self.image:
+            surface.clear()
+            surface.fill(self.background_color)
+            surface.text("Aucune image", (10, 10), self.font, color="white")
+            surface.display()
+            return
 
         if inp.is_mouse_down(3):
             wx, wy = self.screen_to_world(inp.mouse_position())
@@ -260,6 +278,9 @@ class SpriteEditor:
 
         if self.image_display:
             surface.blit(self.image_display, tuple(self.offset))
+            # add border
+            width, height = self.image_display.size
+            surface.rectangle([self.offset[0], self.offset[1], self.offset[0] + width, self.offset[1] + height], outline=rgb_to_hex(self.border_color), width=2)
 
         for sprite in self.sprites:
             x, y = self.world_to_screen((sprite["x"], sprite["y"]))
@@ -268,6 +289,7 @@ class SpriteEditor:
             if self.shift_held:
                 surface.text(sprite["name"], (x + 2, y + 2), self.font, color="white", stroke_width=1)
                 surface.text(f"{sprite['w']}x{sprite['h']}", (x + 2, y + h - 16), self.font, color="white", stroke_width=1)
+                surface.text(f"{sprite['x']}, {sprite['y']}", (x + 2, y + h - 32), self.font, color="white", stroke_width=1)
                 handles = [
                     (sprite["x"] + sprite["w"] // 2, sprite["y"]),
                     (sprite["x"] + sprite["w"], sprite["y"] + sprite["h"] // 2),
@@ -298,10 +320,10 @@ class SpriteEditor:
         if self.drawing:
             w = abs(mx - self.start_pos[0]) // self.scale
             h = abs(my - self.start_pos[1]) // self.scale
-            info_text += f" | Création: {w}x{h}"
+            info_text += f" | Creation: {w}x{h}"
         elif self.resizing:
             s, _ = self.resizing
-            info_text += f" | Édition: {s['w']}x{s['h']}"
+            info_text += f" | Edition: {s['w']}x{s['h']}"
 
         surface.text(info_text, (10, self.canvas.winfo_height() - 20), self.font, color="white", stroke_width=1)
         surface.display()
