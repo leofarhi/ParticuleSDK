@@ -32,13 +32,13 @@ namespace Particule::Core
         FILE* file = File::open_file(path, mode);
         if (!file)
             return nullptr;
-        gint::gint_wswitch_enter();
+        gint_wswitch_enter();
         return new File(file, mode, endian);
     }
 
     void File::Close(File* file) {
         delete file;
-        gint::gint_wswitch_exit();
+        gint_wswitch_exit();
     }
 
     void File::ReadBigEndian(void* data, size_t size) {

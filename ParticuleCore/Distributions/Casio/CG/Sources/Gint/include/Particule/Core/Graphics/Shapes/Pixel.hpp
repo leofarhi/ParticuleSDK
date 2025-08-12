@@ -9,20 +9,20 @@ namespace Particule::Core
     __attribute__((always_inline))
     inline void DrawPixel(int x, int y, const Color& color)
     {
-        gint::dpixel(x, y, color.Raw());
+        dpixel(x, y, color.Raw());
     }
 
     //Draws a pixel without checking if the coordinates are in the screen
     __attribute__((always_inline))
     inline void DrawPixelUnsafe(int x, int y, const Color& color)
     {
-        gint::gint_vram[DWIDTH * y + x] = color.Raw();
+        gint_vram[DWIDTH * y + x] = color.Raw();
     }
 
     __attribute__((always_inline))
     inline void DrawRawPixelUnsafe(int x, int y, const ColorRaw& rawColor)
     {
-        gint::gint_vram[DWIDTH * y + x] = rawColor;
+        gint_vram[DWIDTH * y + x] = rawColor;
     }
 }
 

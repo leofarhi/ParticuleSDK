@@ -17,6 +17,8 @@
     },
     "Casio.CG": {
         "output_file": "output",
+        "output_assets_dir": "assets",
+        "lib_api": "Azur",
         "libraries": [],
         "compile_flags": "",
         "link_flags": "",

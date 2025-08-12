@@ -101,7 +101,7 @@ int main()
         while (app.GetMainWindow() != nullptr) // Boucle tant que la fenêtre principale n'est pas nulle
         {
             app.Update(); // Mettre à jour l'application
-            if (gint::keydown(gint::KEY_ACON) && app.GetMainWindow() != nullptr)
+            if (keydown(KEY_ACON) && app.GetMainWindow() != nullptr)
                 app.GetMainWindow()->Close();
         }
     }

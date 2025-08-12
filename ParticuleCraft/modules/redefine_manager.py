@@ -15,7 +15,7 @@ class RedefineManager:
         # ex: ["TextureP4", "___&whatever"]
         self.asset_declarations: list[list[str]] = []
 
-        # ("NomSymbolique", "gint::KEY_UP")  -> utilisé par GetInput
+        # ("NomSymbolique", "KEY_UP")  -> utilisé par GetInput
         self.input_mappings: list[tuple[str, str]] = []
 
         # ("NomRessource", 42)  -> utilisé par GetResourceID
@@ -67,13 +67,6 @@ class RedefineManager:
             code.append("    #define GetInput(str) Input()")
         code.append("    #endif")
         code.append("")
-        code.append("    /*Exemple de redéfinition de GetInput pour le compilateur GCC")
-        code.append("    #define GetInput(str)(\\")
-        code.append('        CONST_STR_CMP(str, "A") ? Input(gint::KEY_UP) : \\')
-        code.append('        CONST_STR_CMP(str, "B") ? Input(gint::KEY_DOWN) : \\')
-        code.append("        Input()\\")
-        code.append("        )")
-        code.append("    */")
         code.append("}")
         code.append("")
         code.append("#endif // REFERENCE_INPUT_HPP")

@@ -125,7 +125,7 @@ namespace Particule::Core
             {
                 const int i = _getPixel(sampler.GetTexX(x2), texY);
                 if (i != _alphaValue)
-                    gint::gint_vram[DWIDTH * (screenY) + (sampler.GetScreenX(col))] = Color::MultiplyColorRaw(_decodePixel(i), color.Raw());
+                    gint_vram[DWIDTH * (screenY) + (sampler.GetScreenX(col))] = Color::MultiplyColorRaw(_decodePixel(i), color.Raw());
                 x2 += sampler.TexIncr.x;
             }
             y2 += sampler.TexIncr.y;
@@ -150,7 +150,7 @@ namespace Particule::Core
         imgFile->Read<int16_t>(width);
         imgFile->Read<int16_t>(height);
         imgFile->Read<int>(stride);
-        gint::image_t* img = image_alloc(width, height, format);
+        image_t* img = image_alloc(width, height, format);
         if (img == nullptr) {
             File::Close(imgFile);
             return nullptr;
@@ -166,8 +166,8 @@ namespace Particule::Core
         imgFile->Read<unsigned int>(SizeOfPalette);
         if (SizeOfPalette != 0)
         {
-            if (!gint::image_alloc_palette(img, color_count)) {
-                gint::image_free(img);
+            if (!image_alloc_palette(img, color_count)) {
+                image_free(img);
                 File::Close(imgFile);
                 return nullptr;
             }
@@ -190,7 +190,7 @@ namespace Particule::Core
 
     Texture* Texture::Create(int width, int height)
     {
-        gint::image_t* img = image_alloc(width,height,gint::IMAGE_RGB565A);
+        image_t* img = image_alloc(width,height,IMAGE_RGB565A);
         if (img == nullptr) return nullptr;
         Texture* texture = new Texture(img, true);
         if (texture == nullptr) {

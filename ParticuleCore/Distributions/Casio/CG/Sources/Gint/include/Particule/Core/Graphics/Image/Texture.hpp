@@ -15,7 +15,7 @@ namespace Particule::Core
     class Texture
     {
     protected:
-        gint::image_t* img;
+        image_t* img;
         int _alphaValue;
         bool isAllocated;
 
@@ -38,17 +38,17 @@ namespace Particule::Core
         inline int _decodePixel_inline(int pixel) {
             return pixel;
         }
-        Texture(gint::image_t* img) : img(img), _alphaValue(gint::image_alpha(img->format)), isAllocated(false) {}
-        Texture(gint::image_t* img, bool isAllocated) : img(img), _alphaValue(gint::image_alpha(img->format)), isAllocated(isAllocated) {}
+        Texture(image_t* img) : img(img), _alphaValue(image_alpha(img->format)), isAllocated(false) {}
+        Texture(image_t* img, bool isAllocated) : img(img), _alphaValue(image_alpha(img->format)), isAllocated(isAllocated) {}
         virtual ~Texture();
         inline int Width(){ return img->width; }
         inline int Height(){ return img->height; }
         inline bool IsWritable(){ return isAllocated; }
 
         __attribute__((always_inline))
-        inline void Draw(int x, int y) { gint::dimage(x, y, img); }
+        inline void Draw(int x, int y) { dimage(x, y, img); }
         __attribute__((always_inline))
-        inline void DrawSub(int x, int y, Rect rect) { gint::dsubimage(x, y, img, rect.x, rect.y, rect.w, rect.h, gint::DIMAGE_NONE); }
+        inline void DrawSub(int x, int y, Rect rect) { dsubimage(x, y, img, rect.x, rect.y, rect.w, rect.h, DIMAGE_NONE); }
         void DrawSubSize(int x, int y, int w, int h, Rect rect);
         inline void DrawSize(int x, int y, int w, int h) { DrawSubSize(x, y, w, h, {0, 0, img->width, img->height});}
         void DrawSubSizeColor(int x, int y, int w, int h, Rect rect, const Color& color);
@@ -104,7 +104,7 @@ namespace Particule::Core
             
             const int i = _getPixel(xTexture, yTexture);
             if (i == _alphaValue) return false;
-            gint::gint_vram[DWIDTH * (yScreen) + (xScreen)] = _decodePixel(i);
+            gint_vram[DWIDTH * (yScreen) + (xScreen)] = _decodePixel(i);
             return true;
         };
 
@@ -114,7 +114,7 @@ namespace Particule::Core
             
             const int i = self->_getPixel_inline(xTexture, yTexture);
             if (i == self->_alphaValue) return false;
-            gint::gint_vram[DWIDTH * yScreen + xScreen] = self->_decodePixel_inline(i);
+            gint_vram[DWIDTH * yScreen + xScreen] = self->_decodePixel_inline(i);
             return true;
         }
 
@@ -151,8 +151,8 @@ namespace Particule::Core
         inline int _decodePixel_inline(int pixel) {
             return img->palette[pixel + 128];
         }
-        TextureP8(gint::image_t* img) : Texture(img, false) {}
-        TextureP8(gint::image_t* img, bool isAllocated) : Texture(img, isAllocated) {}
+        TextureP8(image_t* img) : Texture(img, false) {}
+        TextureP8(image_t* img, bool isAllocated) : Texture(img, isAllocated) {}
 
         inline void WritePixelRaw(int x, int y, const ColorRaw& color) override {
             (void)x; (void)y; (void)color;
@@ -186,8 +186,8 @@ namespace Particule::Core
         inline int _decodePixel_inline(int pixel) {
             return img->palette[pixel];
         }
-        TextureP4(gint::image_t* img) : Texture(img, false) {}
-        TextureP4(gint::image_t* img, bool isAllocated) : Texture(img, isAllocated) {}
+        TextureP4(image_t* img) : Texture(img, false) {}
+        TextureP4(image_t* img, bool isAllocated) : Texture(img, isAllocated) {}
 
         inline void WritePixelRaw(int x, int y, const ColorRaw& color) override {
             (void)x; (void)y; (void)color;

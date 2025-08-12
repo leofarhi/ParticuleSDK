@@ -15,6 +15,7 @@ def CheckIfBinFileIsSame(path1, path2):
 def CheckIfContentIsSame(file_path, new_content):
     """Check if file content is the same."""
     if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            return f.read() == new_content
+        with open(file_path, "r", encoding="utf-8") as f:
+            text = f.read()
+        return text == new_content
     return False

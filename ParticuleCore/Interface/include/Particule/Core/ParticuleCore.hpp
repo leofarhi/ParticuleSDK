@@ -15,6 +15,7 @@
 #include <Particule/Core/System/Time.hpp>
 #include <Particule/Core/System/Window.hpp>
 #include <Particule/Core/Types/Fixed.hpp>
+#include <Particule/Core/Types/Matrix.hpp>
 #include <Particule/Core/Types/Rect.hpp>
 #include <Particule/Core/Types/Vector2.hpp>
 #include <Particule/Core/Types/Vector3.hpp>

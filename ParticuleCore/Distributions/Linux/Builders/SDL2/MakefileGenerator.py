@@ -5,7 +5,7 @@ from ParticuleCraft.utils import normalize_path
 from ParticuleCraft.modules.uuid_manager import UUIDManager
 from ParticuleCraft.utils.multi_platform import *
 from ParticuleCraft.system.working_dirs import interface_path, engine_path
-
+from ParticuleCraft.utils import CheckIfContentIsSame
 
 class MakefileGenerator:
     def __init__(self, builder) -> None:
@@ -61,8 +61,10 @@ $(EXEC): $(OBJS)
 """
 
         os.makedirs(self.build_dir, exist_ok=True)
-        with open(os.path.join(self.build_dir, "Makefile"), "w", encoding="utf-8") as f:
-            f.write(makefile.strip())
+        makefile_path = os.path.join(self.build_dir, "Makefile")
+        if not CheckIfContentIsSame(makefile_path, makefile):
+            with open(makefile_path, "w", encoding="utf-8") as f:
+                f.write(makefile.strip())
 
         self.uuid_manager.save()
 

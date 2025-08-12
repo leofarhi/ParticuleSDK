@@ -5,7 +5,7 @@ from ParticuleCraft.modules.uuid_manager import UUIDManager
 from ParticuleCraft.modules.redefine_manager import RedefineManager
 from ParticuleCraft.utils.multi_platform import GetPathLinux
 from ..asset_managerCG import AssetManagerCG
-from .MakefileGenerator import MakefileGenerator
+from .MakefileGeneratorGint import MakefileGeneratorGint
 from ParticuleCraft.utils.multi_platform import *
 from ParticuleCraft.utils import *
 
@@ -21,7 +21,7 @@ class BuilderGint(Builder):
         self.asset_manager.export_all()
 
     def prepare_makefile(self) -> None:
-        generator = MakefileGenerator(self)
+        generator = MakefileGeneratorGint(self)
         generator.generate_makefile()
 
     def run_compilation(self) -> None:
@@ -53,7 +53,7 @@ class BuilderGint(Builder):
             if asset.category == "textures":
                 if not asset.data["external"]:
                     uuid = self.uuid_manager.get_uuid(asset.data["path"])
-                    redefine.additional_code_before += f"extern gint::image_t ___IMG_{uuid};\n"
+                    redefine.additional_code_before += f"extern image_t ___IMG_{uuid};\n"
                     img_type = "Texture"
                     if "p8" in asset.data["format"]:
                         img_type += "P8"
@@ -65,7 +65,7 @@ class BuilderGint(Builder):
                 redefine.additional_code_before += f"extern __gint_lib_font_t ___FONT_{uuid};\n"
                 redefine.asset_declarations.append(["Font", f"std::span(___FONT_{uuid}.data, ___FONT_{uuid}.size)"])
         for k, v in self.config_data["inputs"].items():
-            redefine.input_mappings.append((k, f"gint::{v}"))
+            redefine.input_mappings.append((k, f"{v}"))
         for idx, asset in enumerate(self.asset_manager.refactored_assets):
             redefine.resource_mappings.append((asset.reference_path, idx))
         redefine.assets_path = self.config_data["output_assets_dir"]

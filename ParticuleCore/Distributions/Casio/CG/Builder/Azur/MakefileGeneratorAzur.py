@@ -1,19 +1,7 @@
-import os
-from ParticuleCraft.utils.multi_platform import GetPathLinux
-from ParticuleCraft.utils import normalize_path
-from ParticuleCraft.modules.uuid_manager import UUIDManager
-from ParticuleCraft.system.working_dirs import interface_path, engine_path
+from ..Gint.MakefileGeneratorGint import *
 
-class MakefileGenerator:
-    def __init__(self, builder) -> None:
-        self.builder = builder
-        self.config = builder.config_data
-        self.uuid_manager: UUIDManager = builder.uuid_manager
-        self.output = self.config["output_file"]
-        self.display_name = self.config["display_name"]
-        self.project_path = builder.project_path
-        self.build_dir = builder.build_dir
 
+class MakefileGeneratorAzur(MakefileGeneratorGint):
     def generate_makefile(self) -> None:
         source_files = [GetPathLinux(normalize_path(f)) for f in self.config["source_files"]]
         source_files.append(GetPathLinux(normalize_path(os.path.join(self.build_dir, "Resources.cpp"))))
@@ -52,17 +40,18 @@ include(GenerateG3A)
 include(Fxconv)
 find_package(Gint 2.11 REQUIRED)
 find_package(LibProf 2.4 REQUIRED)
+find_package(Azur 0.1 REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE API_SRCS {local}/Sources/Gint/src/*.cpp)
+file(GLOB_RECURSE API_SRCS {local}/Sources/Azur/src/*.cpp)
 set(SOURCES ${{API_SRCS}} {source_files_join})
 
 include_directories(
     ${{CMAKE_CURRENT_SOURCE_DIR}}/include
-    {local}/Sources/Gint/include
+    {local}/Sources/Azur/include
     {interface_include_path}
     {include_paths_join}
 )
@@ -86,7 +75,7 @@ target_compile_options({self.output} PRIVATE
     -fno-builtin-new -fno-builtin-delete)
 target_compile_definitions({self.output} PRIVATE MEMTRACK_ENABLED=1)
 endif()
-target_link_libraries({self.output} Gint::Gint LibProf::LibProf ${{LIBRARIES}} -lsupc++ -lstdc++ {flags_link})
+target_link_libraries({self.output} Azur::Azur Gint::Gint LibProf::LibProf ${{LIBRARIES}} -lsupc++ -lstdc++ {flags_link})
 
 generate_g3a(TARGET {self.output} OUTPUT "{self.output}.g3a"
     NAME "{self.display_name}" ICONS "{icon_uns}" "{icon_sel}")"""

@@ -23,11 +23,11 @@ namespace Particule::Core
         virtual ~Window(){};
     
         // Méthodes principales
-        inline void Display() { gint::dupdate(); }
-        inline void UpdateInput() { gint::cleareventflips();gint::clearevents(); }
-        inline Input GetKey() { return Input(gint::getkey_opt(gint::GETKEY_REP_ALL, NULL).key); }
-        inline void Clear() { gint::dclear(gint::C_BLACK); }
-        inline void Clear(Color color) { gint::dclear(color.Raw()); }
+        inline void Display() { dupdate(); }
+        inline void UpdateInput() { cleareventflips();clearevents(); }
+        inline Input GetKey() { return Input(getkey_opt(GETKEY_REP_ALL, NULL).key); }
+        inline void Clear() { dclear(C_BLACK); }
+        inline void Clear(Color color) { dclear(color.Raw()); }
     
         constexpr int Width() const { return DefaultWidth; }
         constexpr int Height() const { return DefaultHeight; }

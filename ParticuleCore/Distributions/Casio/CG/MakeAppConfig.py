@@ -2,6 +2,7 @@ from ParticuleCraft.core.distribution_base import *
 from ParticuleCraft.config.fields import *
 from ParticuleCraft.utils.multi_platform import *
 from .Builder.Gint.BuilderGint import BuilderGint
+from .Builder.Azur.BuilderAzur import BuilderAzur
 
 
 class MakeAppConfig(Distribution):
@@ -17,7 +18,9 @@ class MakeAppConfig(Distribution):
     def __init__(self) -> None:
         super().__init__("Casio.CG", is_library=False)
         self.Keys = ["KEY_F1","KEY_F2","KEY_F3","KEY_F4","KEY_F5","KEY_F6","KEY_SHIFT","KEY_OPTN","KEY_VARS","KEY_MENU","KEY_LEFT","KEY_UP","KEY_ALPHA","KEY_SQUARE","KEY_POWER","KEY_EXIT","KEY_DOWN","KEY_RIGHT","KEY_XOT","KEY_LOG","KEY_LN","KEY_SIN","KEY_COS","KEY_TAN","KEY_FRAC","KEY_FD","KEY_LEFTP","KEY_RIGHTP","KEY_COMMA","KEY_ARROW","KEY_7","KEY_8","KEY_9","KEY_DEL","KEY_4","KEY_5","KEY_6","KEY_MUL","KEY_DIV","KEY_1","KEY_2","KEY_3","KEY_ADD","KEY_SUB","KEY_0","KEY_DOT","KEY_EXP","KEY_NEG","KEY_EXE","KEY_ACON","KEY_HELP","KEY_LIGHT","KEY_KBD","KEY_X","KEY_Y","KEY_Z","KEY_EQUALS","KEY_CLEAR","KEY_X2","KEY_CARET","KEY_SWITCH","KEY_LEFTPAR","KEY_RIGHTPAR","KEY_STORE","KEY_TIMES","KEY_PLUS","KEY_MINUS"]
-
+        self.lib_api = VarEnum(
+            ["Gint", "Azur"], "Gint", "Graphics API used for the application"
+        )
         self.libraries = VarList(VarPath("","*.a", filetypes=[("Library Files", "*.a")]),[], "Libraries to link against")
         self.compile_flags = VarString("","Additional flags for the compiler")
         self.link_flags = VarString("","Additional flags for the linker")
@@ -54,4 +57,10 @@ class MakeAppConfig(Distribution):
         return True
 
     def generate_builder(self, makefile_path: str) -> Builder:
-        return BuilderGint(self, makefile_path)
+        if self.lib_api.value == "Gint":
+            return BuilderGint(self, makefile_path)
+        elif self.lib_api.value == "Azur":
+            return BuilderAzur(self, makefile_path)
+        else:
+            raise ValueError(f"Unsupported API: {self.lib_api.value}")
+        

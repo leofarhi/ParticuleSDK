@@ -12,8 +12,8 @@ namespace Particule::Core
 
     /*Exemple de redéfinition de GetInput pour le compilateur GCC
     #define GetInput(str)(\
-        CONST_STR_CMP(str, "A") ? Input(gint::KEY_UP) : \
-        CONST_STR_CMP(str, "B") ? Input(gint::KEY_DOWN) : \
+        CONST_STR_CMP(str, "A") ? Input(KEY_UP) : \
+        CONST_STR_CMP(str, "B") ? Input(KEY_DOWN) : \
         Input()\
         )
     */
