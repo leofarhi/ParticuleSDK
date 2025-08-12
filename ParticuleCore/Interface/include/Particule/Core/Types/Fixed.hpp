@@ -244,6 +244,15 @@ namespace Particule::Core
         static constexpr fixed_t copysign(fixed_t a, fixed_t b) {
             return (b < fixed_t::zero()) ? -a.abs() : a.abs();
         }
+
+        //min et max
+        static constexpr fixed_t min(const fixed_t& a, const fixed_t& b) {
+            return (a.value < b.value) ? a : b;
+        }
+
+        static constexpr fixed_t max(const fixed_t& a, const fixed_t& b) {
+            return (a.value > b.value) ? a : b;
+        }
     };
 
     // int op fixed_t
@@ -269,6 +278,7 @@ namespace Particule::Core
     template<int P, typename T> inline fixed_t<P,T> cos(const fixed_t<P,T>& x) { return fixed_t<P,T>::cos(x); }
     template<int P, typename T> inline fixed_t<P,T> atan2(const fixed_t<P,T>& y, const fixed_t<P,T>& x) { return fixed_t<P,T>::atan2(y, x); }
     template<int P, typename T> inline fixed_t<P,T> asin(const fixed_t<P,T>& x) { return fixed_t<P,T>::asin(x); }
+
 
     using fixed12_32 = fixed_t<12, int32_t>;
     using fixed12_64 = fixed_t<12, int64_t>;
