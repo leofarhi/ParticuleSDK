@@ -15,11 +15,10 @@ namespace Particule::Engine {
         struct SceneLoader
         {
             std::string name;
-            // Legacy-compatible: returns raw Scene* allocated with new
-            Scene* (*loadScene)(void) { nullptr };
+            void (*loadScene)(Scene&){ nullptr };
 
             SceneLoader() = default;
-            SceneLoader(std::string name_, Scene* (*fn)(void))
+            SceneLoader(std::string name_, void (*fn)(Scene&))
                 : name(std::move(name_)), loadScene(fn) {}
         };
 
@@ -38,7 +37,7 @@ namespace Particule::Engine {
 
         bool isRunning() const noexcept;
 
-        void AddScene(std::string name, Scene* (*loadScene)(void));
+        void AddScene(std::string name, void (*loadScene)(Scene&));
 
         void LoadScene(int index);
         void LoadScene(const std::string& name);

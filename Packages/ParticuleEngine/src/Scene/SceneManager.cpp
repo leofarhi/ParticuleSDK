@@ -26,7 +26,7 @@ namespace Particule::Engine {
         return !loadedScenes.empty() || !to_load.empty() || !to_unload.empty();
     }
 
-    void SceneManager::AddScene(std::string name, Scene* (*loadScene)(void))
+    void SceneManager::AddScene(std::string name, void (*loadScene)(Scene&))
     {
         if (name.empty()) throw std::invalid_argument("AddScene: empty name");
         if (!loadScene) throw std::invalid_argument("AddScene: null loader");
@@ -113,10 +113,12 @@ namespace Particule::Engine {
             // Load requested
             for (int index : to_load) {
                 auto& loader = availableScenes[index];
-                Scene* raw = loader.loadScene();       // legacy loader returns raw
-                if (!raw) throw std::runtime_error("loadScene() returned null for " + loader.name);
-                std::unique_ptr<Scene> owned(raw);     // adopt ownership safely
+                // 1) Alloue la scène une seule fois avec le NOM source de vérité
+                auto owned = std::make_unique<Scene>(loader.name);
                 Scene* s = owned.get();
+                // 2) Laisse le loadScene remplir la scène (sans new Scene à l'intérieur)
+                loader.loadScene(*s);
+                // 3) Adopte ownership et lance le cycle de vie
                 loadedScenes.push_back(std::move(owned));
                 s->CallAllComponents(&Component::Awake, true);
                 s->CallAllComponents(&Component::OnEnable, false);
