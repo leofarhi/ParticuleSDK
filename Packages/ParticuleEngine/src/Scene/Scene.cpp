@@ -3,24 +3,20 @@
 
 namespace Particule::Engine {
 
-    Scene::Scene(std::string name): name(name), gameObjects(), enabled(true), skybox(Color::Blue, Color::Cyan)
-    {}
-
-    Scene::~Scene()
+    Scene::~Scene() noexcept
     {
-        for (GameObject *gameObject : this->gameObjects)
-            delete gameObject;
-        this->gameObjects.clear();
-        //this->gameObjects.shrink_to_fit();
+        // unique_ptr cleans up automatically
+        toRemove_.clear();
+        gameObjects_.clear();
     }
 
-    void Scene::DrawSky()
+    void Scene::DrawSky() noexcept
     {
         Window* window = Window::GetCurrentWindow();
         if (skybox.top.A() == 0 && skybox.bottom.A() == 0)
             return;
         if (skybox.top == skybox.bottom)
-            window->Clear(skybox.top );
+            window->Clear(skybox.top);
         else
         {
             int heightInt = window->Height();
@@ -39,47 +35,77 @@ namespace Particule::Engine {
         }
     }
 
-    GameObject* Scene::AddGameObject(GameObject *gameObject)
+    GameObject& Scene::AddGameObject(std::unique_ptr<GameObject> go)
     {
-        if (gameObject == nullptr)
-            return gameObject;
-        // Check if the gameObject is already in the scene
-        if (std::find(gameObjects.begin(), gameObjects.end(), gameObject) != gameObjects.end())
-            return gameObject;
-        gameObjects.push_back(gameObject);
-        gameObject->scene = this;
-        return gameObject;
+        if (!go) throw std::invalid_argument("AddGameObject: null unique_ptr");
+        GameObject* raw = go.get();
+        // Ensure the back-reference is correct
+        raw->scene = this;
+        // Only push if not already owned by this scene
+        if (find_uptr_(raw) == gameObjects_.end())
+            gameObjects_.push_back(std::move(go));
+        return *raw;
     }
 
-    void Scene::RemoveGameObject(GameObject *gameObject)
+    GameObject& Scene::AddGameObject(GameObject* go_raw)
     {
-        gameObjectsToRemove.push_back(gameObject);
+        if (!go_raw) throw std::invalid_argument("AddGameObject: null raw pointer");
+        // Ensure the back-reference is correct
+        if (go_raw->scene != this) go_raw->scene = this;
+        // Adopt ownership only if not already present in this scene
+        if (find_uptr_(go_raw) == gameObjects_.end())
+            gameObjects_.emplace_back(go_raw);
+        return *go_raw;
     }
 
-    GameObject* Scene::FindGameObject(std::string name)
+    void Scene::RemoveGameObject(GameObject* go) noexcept
     {
-        for (GameObject *gameObject : this->gameObjects)
-        {
-            if (gameObject->name == name)
-                return gameObject;
+        if (!go || go->scene != this) return;
+        toRemove_.push_back(go);
+    }
+
+    GameObject* Scene::FindGameObject(std::string_view nm) const noexcept
+    {
+        for (auto const& up : gameObjects_) {
+            GameObject* go = up.get();
+            if (go && go->name == nm) return go;
         }
         return nullptr;
     }
 
+    bool Scene::MoveGameObjectTo(Scene& dst, GameObject* go) noexcept
+    {
+        if (!go || go->scene != this) return false;
+        auto it = find_uptr_(go);
+        if (it == gameObjects_.end()) return false; // not found (shouldn’t happen)
+
+        // Keep raw pointer stable while transferring unique_ptr
+        std::unique_ptr<GameObject> owned = std::move(*it);
+        gameObjects_.erase(it);
+
+        go->scene = &dst;
+        dst.AddGameObject(std::move(owned));
+        return true;
+    }
+
     void Scene::EndMainLoop()
     {
-        if (gameObjectsToRemove.size() > 0)
-        {
-            for (GameObject *gameObject : gameObjectsToRemove)
-            {
-                if (gameObject->scene == this)
-                {
-                    gameObject->scene = nullptr;
-                    gameObjects.erase(std::remove(gameObjects.begin(), gameObjects.end(), gameObject), gameObjects.end());
-                    delete gameObject;
-                }
-            }
-            gameObjectsToRemove.clear();
-        }
+        if (toRemove_.empty()) return;
+
+        std::unordered_set<GameObject*> doomed(toRemove_.begin(), toRemove_.end());
+
+        // Destroy owned objects marked for removal
+        // (unique_ptr handles delete when removed from vector)
+        gameObjects_.erase(
+            std::remove_if(gameObjects_.begin(), gameObjects_.end(),
+                [&](const std::unique_ptr<GameObject>& up){
+                    if (!up) return true; // shouldn't happen, but be safe
+                    if (doomed.count(up.get()) == 0) return false;
+                    up->scene = nullptr;
+                    return true; // erase => destroy
+                }),
+            gameObjects_.end());
+
+        toRemove_.clear();
     }
 }

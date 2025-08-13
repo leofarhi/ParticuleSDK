@@ -5,26 +5,16 @@
 #include <Particule/Engine/Scene/SceneManager.hpp>
 
 namespace Particule::Engine {
-    
-    GameObject::GameObject(): m_activeSelf(true),scene(nullptr), transform(*this), name("GameObject"),components(),layer(Layer::LAYER_Default), tag(Tag::TAG_Untagged), isStatic(false)
-    {
-        this->scene = (Scene *)SceneManager::sceneManager->activeScene();
-    }
 
     GameObject::GameObject(Scene *scene): GameObject(scene, "GameObject")
     {}
 
     GameObject::GameObject(Scene *scene, std::string name):
         m_activeSelf(true), scene(scene), transform(*this), name(name), components(), layer(Layer::LAYER_Default), tag(Tag::TAG_Untagged), isStatic(false)
-    {
-        this->scene = scene;
-        this->scene->AddGameObject(this);
-    }
+    {}
 
     GameObject::~GameObject()
     {
-        for (Component *component : this->components)
-            delete component;
         this->components.clear();
         if (this->transform.parent() != nullptr)
             this->transform.SetParent(nullptr);
@@ -32,27 +22,53 @@ namespace Particule::Engine {
             this->scene->RemoveGameObject(this);
     }
 
-    static void UpdateActive(GameObject *gameObject, bool value)
-    {
-        bool currentValue = gameObject->activeSelf();
-        if (currentValue != value)
-        {
-            if (value)
-                gameObject->CallComponent(&Component::OnEnable, false);
-            else
-                gameObject->CallComponent(&Component::OnDisable, false);
-            std::vector<Transform *>& children = gameObject->transform.children();
-            for (Transform *child : children)
-                UpdateActive(&child->gameObject, value);
-        }
-    }
-
     void GameObject::SetActive(bool value)
     {
-        bool oldValue = this->activeInHierarchy();
-        if (!oldValue && this->m_activeSelf != value)
-            UpdateActive(this, value);
-        this->m_activeSelf = value;
+        // État effectif du parent (indépendant de this->m_activeSelf)
+        const bool parentActive =
+            (transform.parent() == nullptr)
+                ? true
+                : transform.parent()->gameObject.activeInHierarchy();
+
+        const bool wasSelf = m_activeSelf;
+        const bool was     = parentActive && wasSelf;
+
+        m_activeSelf = value;
+
+        const bool now = parentActive && m_activeSelf;
+
+        // Notifie this si son état effectif change
+        if (was != now) {
+            if (now) CallComponent(&Component::OnEnable, false);
+            else     CallComponent(&Component::OnDisable, false);
+        } else {
+            // Si l'état effectif de this n'a pas changé, rien ne change pour les descendants
+            // (le parent effectif reste identique), on peut sortir.
+            return;
+        }
+
+        // Propage proprement aux enfants : on calcule pour chacun childWas/childNow
+        // et on passe ces valeurs comme "parentWas/parentNow" au niveau suivant.
+        auto propagate = [&](auto&& self, GameObject* parent, bool parentWas, bool parentNow) -> void {
+            auto& kids = parent->transform.children();
+            for (Transform* ct : kids) {
+                GameObject* child = &ct->gameObject;
+
+                const bool childSelf = child->activeSelf();
+                const bool childWas  = parentWas && childSelf;
+                const bool childNow  = parentNow && childSelf;
+
+                if (childWas != childNow) {
+                    if (childNow) child->CallComponent(&Component::OnEnable, false);
+                    else          child->CallComponent(&Component::OnDisable, false);
+                }
+
+                self(self, child, childWas, childNow);
+            }
+        };
+
+        propagate(propagate, this, was, now);
     }
+
 
 }

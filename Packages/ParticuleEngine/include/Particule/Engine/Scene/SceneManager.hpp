@@ -1,10 +1,12 @@
 #ifndef PE_SCENE_MANAGER_HPP
 #define PE_SCENE_MANAGER_HPP
 #include <Particule/Core/ParticuleCore.hpp>
+#include <Particule/Engine/Scene/Scene.hpp>
 #include <vector>
 #include <unordered_set>
 #include <string>
-#include <Particule/Engine/Scene/Scene.hpp>
+#include <functional>
+#include <memory>
 
 namespace Particule::Engine {
 
@@ -13,69 +15,47 @@ namespace Particule::Engine {
         struct SceneLoader
         {
             std::string name;
-            Scene* (*loadScene)(void);
-            SceneLoader(std::string name, Scene* (*loadScene)(void)) : name(name), loadScene(loadScene) {}
-            SceneLoader() : name(""), loadScene(nullptr) {}
-            SceneLoader(const SceneLoader& other) : name(other.name), loadScene(other.loadScene) {}
-            SceneLoader(SceneLoader&& other) noexcept : name(std::move(other.name)), loadScene(other.loadScene) {}
-            SceneLoader& operator=(const SceneLoader& other)
-            {
-                if (this != &other)
-                {
-                    name = other.name;
-                    loadScene = other.loadScene;
-                }
-                return *this;
-            }
-            SceneLoader& operator=(SceneLoader&& other) noexcept
-            {
-                if (this != &other)
-                {
-                    name = std::move(other.name);
-                    loadScene = other.loadScene;
-                }
-                return *this;
-            }
-            bool operator==(const SceneLoader& other) const
-            {
-                return name == other.name && loadScene == other.loadScene;
-            }
-            bool operator!=(const SceneLoader& other) const
-            {
-                return !(*this == other);
-            }
+            // Legacy-compatible: returns raw Scene* allocated with new
+            Scene* (*loadScene)(void) { nullptr };
+
+            SceneLoader() = default;
+            SceneLoader(std::string name_, Scene* (*fn)(void))
+                : name(std::move(name_)), loadScene(fn) {}
         };
 
     private:
         std::vector<SceneLoader> availableScenes;
-        std::vector<Scene*> loadedScenes;
+        std::vector<std::unique_ptr<Scene>> loadedScenes;   // ownership here
         std::unordered_set<int> to_load;
-        std::unordered_set<Scene*> to_unload;
-        bool loading;
-    public:
-        static SceneManager *sceneManager;
+        std::unordered_set<Scene*> to_unload;               // non-owning markers
+        bool loading { false };
 
-        SceneManager();
-        ~SceneManager();
-        bool isRunning();
+    public:
+        static SceneManager* sceneManager;
+
+        SceneManager() noexcept;
+        ~SceneManager() noexcept;
+
+        bool isRunning() const noexcept;
+
         void AddScene(std::string name, Scene* (*loadScene)(void));
 
         void LoadScene(int index);
-        void LoadScene(std::string name);
+        void LoadScene(const std::string& name);
         void ChangeScene(int index);
-        void ChangeScene(std::string name);
+        void ChangeScene(const std::string& name);
 
-        void UnloadScene(Scene *scene);
-        void UnloadScene(std::string name);
+        void UnloadScene(Scene* scene) noexcept;
+        void UnloadScene(const std::string& name) noexcept;
 
-        Scene *GetScene(std::string name);
-        Scene *activeScene();
+        Scene* GetScene(const std::string& name) const noexcept;
+        Scene* activeScene() const noexcept;
 
         template<typename Method, typename... Args>
         void CallAllComponents(Method method, bool includeInactive, Args&&... args)
         {
-            for (Scene* scene : loadedScenes)
-            {
+            for (auto& up : loadedScenes) {
+                Scene* scene = up.get();
                 if (scene->enabled)
                     scene->CallAllComponents(method, includeInactive, std::forward<Args>(args)...);
             }

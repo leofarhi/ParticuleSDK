@@ -7,6 +7,10 @@
 #include <Particule/Engine/Core/GameObject.hpp>
 #include <vector>
 #include <string>
+#include <memory>
+#include <unordered_set>
+#include <algorithm>
+#include <string_view>
 
 namespace Particule::Engine {
     using namespace Particule::Core;
@@ -14,43 +18,74 @@ namespace Particule::Engine {
     class Scene
     {
     private:
-        std::vector<GameObject*> gameObjectsToRemove;
-        // Suppression des constructeurs de copie et de déplacement
-        Scene(const Scene&) = delete; // Suppression du constructeur de copie
-        Scene& operator=(const Scene&) = delete; // Suppression de l'opérateur d'affectation
-        Scene(Scene&&) = delete; // Suppression du constructeur de déplacement
-        Scene& operator=(Scene&&) = delete; // Suppression de l'opérateur d'affectation par déplacement
+        // Ownership: Scene exclusively owns its GameObjects
+        std::vector<std::unique_ptr<GameObject>> gameObjects_;
+        // Non-owning list scheduled for removal at EndMainLoop
+        std::vector<GameObject*> toRemove_;
+
+        // Deleted copy/move to avoid accidental duplication of ownership
+        Scene(const Scene&) = delete;
+        Scene& operator=(const Scene&) = delete;
+        Scene(Scene&&) = delete;
+        Scene& operator=(Scene&&) = delete;
+
+        // Helpers
+        auto find_uptr_(GameObject* ptr) noexcept {
+            return std::find_if(gameObjects_.begin(), gameObjects_.end(),
+                [&](const std::unique_ptr<GameObject>& up){ return up.get() == ptr; });
+        }
+
+        // Called once per frame by SceneManager
+        void EndMainLoop();
+        friend class SceneManager;
     public:
         std::string name;
-        std::vector<GameObject*> gameObjects;
-        bool enabled;
-        Skybox skybox;
+        bool enabled {true};
+        Skybox skybox { Color::Blue, Color::Cyan };
 
-        Scene(std::string name);
-        ~Scene();
-        void DrawSky();
-        GameObject* AddGameObject(GameObject *gameObject);
-        void RemoveGameObject(GameObject *gameObject);
-        GameObject* FindGameObject(std::string name);
-        void EndMainLoop();
-        
+        explicit Scene(std::string name) : name(std::move(name)) {}
+        ~Scene() noexcept;
+
+        void DrawSky() noexcept;
+
+        // --- Add / Remove ---
+        // Take ownership from unique_ptr
+        GameObject& AddGameObject(std::unique_ptr<GameObject> go);
+        // Take ownership from raw ptr (for legacy code: new GameObject(scene, ...))
+        GameObject& AddGameObject(GameObject* go_raw);
+
+        // Schedule removal at end of frame (safe)
+        void RemoveGameObject(GameObject* go) noexcept;
+
+        // Find by name (non-owning pointer)
+        GameObject* FindGameObject(std::string_view name) const noexcept;
+
+        // Transfer ownership of a GameObject to another scene (keeps the same pointer value for external refs)
+        bool MoveGameObjectTo(Scene& dst, GameObject* go) noexcept;
+
+        // Iterate components of all objects
         template<typename Method, typename... Args>
         void CallAllComponents(Method method, bool includeInactive, Args&&... args)
         {
-            if (includeInactive)
-            {
-                for (GameObject *gameObject : this->gameObjects)
-                    gameObject->CallComponent(method, includeInactive, std::forward<Args>(args)...);
+            for (auto& up : gameObjects_) {
+                GameObject* go = up.get();
+                if (includeInactive || go->activeInHierarchy())
+                    go->CallComponent(method, includeInactive, std::forward<Args>(args)...);
             }
-            else
-            {
-                for (GameObject *gameObject : this->gameObjects)
-                {
-                    if (gameObject->activeInHierarchy())
-                        gameObject->CallComponent(method, includeInactive, std::forward<Args>(args)...);
-                }
-            }
-        };
+        }
+
+        // Iteration utility (read-only)
+        const std::vector<std::unique_ptr<GameObject>>& objects() const noexcept { return gameObjects_; }
+
+        template<class TGO = GameObject, class... Args>
+        TGO* EmplaceGameObject(Args&&... args)
+        {
+            auto ptr = std::make_unique<TGO>(this, std::forward<Args>(args)...);
+            TGO* raw = ptr.get();
+            AddGameObject(std::move(ptr)); // adoption ownership et association à la scène
+            return raw;
+        }
+        
     };
 
 }

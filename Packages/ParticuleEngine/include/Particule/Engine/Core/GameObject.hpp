@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <cstdarg>
+#include <memory>
 
 namespace Particule::Engine {
 
@@ -20,19 +21,24 @@ namespace Particule::Engine {
     private:
         bool m_activeSelf;
         Scene *scene;
+        std::vector<std::unique_ptr<Component>> components;
         friend class Scene;
     public:
         Transform transform;
         std::string name;
-        std::vector<Component*> components;
         Layer layer;
         Tag tag;
         bool isStatic;
 
-        GameObject();
+        GameObject() = delete;
         GameObject(Scene *scene);
         GameObject(Scene *scene, std::string name);
         ~GameObject() override;
+
+        GameObject(const GameObject&) = delete;
+        GameObject& operator=(const GameObject&) = delete;
+        GameObject(GameObject&&) = delete;            // ou implémente prudemment
+        GameObject& operator=(GameObject&&) = delete; // idem
 
         inline bool activeInHierarchy() const
         {
@@ -40,17 +46,25 @@ namespace Particule::Engine {
                 && (this->transform.parent() == nullptr 
                     || this->transform.parent()->gameObject.activeInHierarchy());
         };
-        inline bool activeSelf() const { return m_activeSelf; }
+        inline bool activeSelf() const noexcept { return m_activeSelf; }
         void SetActive(bool value);
 
-        inline Scene *GetScene() const { return scene; }
+        inline Scene *GetScene() const noexcept { return scene; }
 
         template <typename T_Component, typename... Args>
-        T_Component *AddComponent(Args... args);
+        T_Component* AddComponent(Args&&... args);
+
         template <typename T_Component>
         T_Component *GetComponent();
+
+        template <typename T_Component>
+        [[nodiscard]] const T_Component* GetComponent() const;
+
         template <typename T_Component>
         std::vector<T_Component *> GetComponents();
+
+        template <typename T_Component>
+        [[nodiscard]] std::vector<const T_Component*> GetComponents() const;
 
         template<typename Method, typename... Args>
         void CallComponent(Method method, bool includeInactive, Args&&... args);

@@ -6,150 +6,141 @@
 
 namespace Particule::Engine {
 
-    SceneManager *SceneManager::sceneManager = nullptr;
+    SceneManager* SceneManager::sceneManager = nullptr;
 
-    SceneManager::SceneManager() : availableScenes(), loadedScenes(), to_load(), to_unload(), loading(false)
+    SceneManager::SceneManager() noexcept
     {
         SceneManager::sceneManager = this;
     }
 
-    SceneManager::~SceneManager()
+    SceneManager::~SceneManager() noexcept
     {
-        for (Scene *scene : loadedScenes)
-            delete scene;
+        to_unload.clear();
+        to_load.clear();
         loadedScenes.clear();
-        //loadedScenes.shrink_to_fit();
+        AssetManager::UnloadUnused();
     }
 
-    bool SceneManager::isRunning()
+    bool SceneManager::isRunning() const noexcept
     {
-        return loadedScenes.size() > 0 || (to_load.size() > 0) || (to_unload.size() > 0);
+        return !loadedScenes.empty() || !to_load.empty() || !to_unload.empty();
     }
 
     void SceneManager::AddScene(std::string name, Scene* (*loadScene)(void))
     {
-        availableScenes.push_back(SceneManager::SceneLoader(name, loadScene));
+        if (name.empty()) throw std::invalid_argument("AddScene: empty name");
+        if (!loadScene) throw std::invalid_argument("AddScene: null loader");
+        // Enforce unique names
+        for (auto const& sl : availableScenes)
+            if (sl.name == name)
+                throw std::invalid_argument("AddScene: duplicate scene name: " + name);
+        availableScenes.emplace_back(std::move(name), loadScene);
     }
 
     void SceneManager::LoadScene(int index)
     {
-        if (index < 0 || index >= (int)availableScenes.size())
+        if (index < 0 || index >= static_cast<int>(availableScenes.size()))
             throw std::out_of_range("Scene index out of range (" + std::to_string(index) + ")");
         to_load.insert(index);
         loading = true;
     }
 
-    void SceneManager::LoadScene(std::string name)
+    void SceneManager::LoadScene(const std::string& name)
     {
-        for (int i = 0; i < (int)availableScenes.size(); i++)
-        {
-            if (availableScenes[i].name == name)
-            {
-                this->LoadScene(i);
-                return;
-            }
-        }
+        for (int i = 0; i < static_cast<int>(availableScenes.size()); ++i)
+            if (availableScenes[i].name == name) { LoadScene(i); return; }
         throw std::out_of_range("Scene name not found (" + name + ")");
     }
 
     void SceneManager::ChangeScene(int index)
     {
-        if (index < 0 || index >= (int)availableScenes.size())
+        if (index < 0 || index >= static_cast<int>(availableScenes.size()))
             throw std::out_of_range("Scene index out of range (" + std::to_string(index) + ")");
-        for (Scene *scene : loadedScenes)
-            UnloadScene(scene);
+        for (auto& up : loadedScenes)
+            UnloadScene(up.get());
         to_load.insert(index);
         loading = true;
     }
 
-    void SceneManager::ChangeScene(std::string name)
+    void SceneManager::ChangeScene(const std::string& name)
     {
-        for (int i = 0; i < (int)availableScenes.size(); i++)
-        {
-            if (availableScenes[i].name == name)
-            {
-                this->ChangeScene(i);
-                return;
-            }
-        }
+        for (int i = 0; i < static_cast<int>(availableScenes.size()); ++i)
+            if (availableScenes[i].name == name) { ChangeScene(i); return; }
         throw std::out_of_range("Scene name not found (" + name + ")");
     }
 
-    void SceneManager::UnloadScene(Scene *scene)
+    void SceneManager::UnloadScene(Scene* scene) noexcept
     {
-        if (scene == nullptr)
-            return;
+        if (!scene) return;
         to_unload.insert(scene);
         loading = true;
     }
 
-    void SceneManager::UnloadScene(std::string name)
+    void SceneManager::UnloadScene(const std::string& name) noexcept
     {
-        for (Scene *scene : loadedScenes)
-        {
-            if (scene->name == name)
-                this->UnloadScene(scene);
-        }
+        for (auto& up : loadedScenes)
+            if (up && up->name == name) UnloadScene(up.get());
     }
 
-    Scene *SceneManager::GetScene(std::string name)
+    Scene* SceneManager::GetScene(const std::string& name) const noexcept
     {
-        for (Scene *scene : loadedScenes)
-        {
-            if (scene->name == name)
-                return scene;
-        }
+        for (auto const& up : loadedScenes)
+            if (up && up->name == name) return up.get();
         return nullptr;
     }
 
-    Scene *SceneManager::activeScene()
+    Scene* SceneManager::activeScene() const noexcept
     {
-        if (loadedScenes.size() == 0)
-            return nullptr;
-        return loadedScenes[0];
+        if (loadedScenes.empty()) return nullptr;
+        return loadedScenes.front().get();
     }
 
     void SceneManager::MainLoop()
     {
-        if (loading)
-        {
-            // Unload and load scenes
-            for (Scene *scene : to_unload)
-            {
+        if (loading) {
+            // Unload requested
+            for (Scene* scene : to_unload) {
+                if (!scene) continue;
                 scene->CallAllComponents(&Component::OnDisable, false);
                 scene->CallAllComponents(&Component::OnDestroy, true);
-                delete scene;
             }
             loadedScenes.erase(
                 std::remove_if(loadedScenes.begin(), loadedScenes.end(),
-                    [&](Scene* scene) { return to_unload.count(scene) > 0; }),
-                loadedScenes.end()
-            );
+                    [&](const std::unique_ptr<Scene>& up){ return to_unload.count(up.get()) > 0; }),
+                loadedScenes.end());
             to_unload.clear();
-            for (int index : to_load)
-            {
-                Scene *scene = availableScenes[index].loadScene();
-                loadedScenes.push_back(scene);
-                scene->CallAllComponents(&Component::Awake, true);
-                scene->CallAllComponents(&Component::OnEnable, false);
-                scene->CallAllComponents(&Component::Start, false);
+
+            // Load requested
+            for (int index : to_load) {
+                auto& loader = availableScenes[index];
+                Scene* raw = loader.loadScene();       // legacy loader returns raw
+                if (!raw) throw std::runtime_error("loadScene() returned null for " + loader.name);
+                std::unique_ptr<Scene> owned(raw);     // adopt ownership safely
+                Scene* s = owned.get();
+                loadedScenes.push_back(std::move(owned));
+                s->CallAllComponents(&Component::Awake, true);
+                s->CallAllComponents(&Component::OnEnable, false);
+                s->CallAllComponents(&Component::Start, false);
             }
             to_load.clear();
+            AssetManager::UnloadUnused();
+            AssetManager::LoadUsed();
+            loading = false;
         }
-        
+
         CallAllComponents(&Component::FixedUpdate, false);
         CallAllComponents(&Component::Update, false);
         CoroutineManager::instance().update();
         CallAllComponents(&Component::LateUpdate, false);
-        for (Scene *scene : loadedScenes)
-            scene->EndMainLoop();
+
+        for (auto& up : loadedScenes)
+            up->EndMainLoop();
     }
 
     void SceneManager::Draw()
     {
-        if (loadedScenes.size() == 0 || Camera::main == nullptr)
+        if (loadedScenes.empty() || Camera::main == nullptr)
             return;
         Camera::main->Render();
     }
-
 }

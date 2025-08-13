@@ -7,6 +7,7 @@
 #include <Particule/Engine/Core/Coroutine/CoroutineManager.hpp>
 #include <stdio.h>
 #include <cstdarg>
+#include <memory>
 
 namespace Particule::Engine {
 
@@ -58,49 +59,70 @@ namespace Particule::Engine {
     };
 
     template <typename T_Component, typename... Args>
-    T_Component *GameObject::AddComponent(Args... args)
+    T_Component* GameObject::AddComponent(Args&&... args)
     {
-        static_assert(std::is_base_of<Component, T_Component>::value,
-                  "T_Component must derive from Component");
-        T_Component *component = new T_Component(*this, args...);
-        components.push_back(component);
-        return component;
+        static_assert(std::is_base_of_v<Component, T_Component>,
+                    "T_Component must derive from Component");
+        auto up = std::make_unique<T_Component>(*this, std::forward<Args>(args)...);
+        T_Component* raw = up.get();
+        components.emplace_back(std::move(up));
+        return raw;
     }
 
+    // GetComponent (non-const)
     template <typename T_Component>
-    T_Component *GameObject::GetComponent()
+    [[nodiscard]] T_Component* GameObject::GetComponent()
     {
-        for (Component *component : components)
-        {
-            T_Component *tComponent = dynamic_cast<T_Component *>(component);
-            if (tComponent != nullptr)
-                return tComponent;
-        }
+        for (auto& up : components)
+            if (auto* p = dynamic_cast<T_Component*>(up.get()))
+                return p;
         return nullptr;
     }
 
+    // GetComponent (const)
     template <typename T_Component>
-    std::vector<T_Component *> GameObject::GetComponents()
+    [[nodiscard]] const T_Component* GameObject::GetComponent() const
     {
-        std::vector<T_Component *> list;
-        for (Component *component : components)
-        {
-            T_Component *tComponent = dynamic_cast<T_Component *>(component);
-            if (tComponent != nullptr)
-                list.push_back(tComponent);
-        }
+        for (auto const& up : components)
+            if (auto* p = dynamic_cast<const T_Component*>(up.get()))
+                return p;
+        return nullptr;
+    }
+
+    // GetComponents (non-const)
+    template <typename T_Component>
+    [[nodiscard]] std::vector<T_Component*> GameObject::GetComponents()
+    {
+        std::vector<T_Component*> list;
+        list.reserve(components.size());
+        for (auto& up : components)
+            if (auto* p = dynamic_cast<T_Component*>(up.get()))
+                list.push_back(p);
+        return list;
+    }
+
+    // GetComponents (const)
+    template <typename T_Component>
+    [[nodiscard]] std::vector<const T_Component*> GameObject::GetComponents() const
+    {
+        std::vector<const T_Component*> list;
+        list.reserve(components.size());
+        for (auto const& up : components)
+            if (auto* p = dynamic_cast<const T_Component*>(up.get()))
+                list.push_back(p);
         return list;
     }
 
     template<typename Method, typename... Args>
     void GameObject::CallComponent(Method method, bool includeInactive, Args&&... args)
     {
-        for (Component *component : this->components)
+        for (auto& up : components)
         {
-            if (includeInactive || component->enabled())
-                (component->*method)(std::forward<Args>(args)...);
+            Component* c = up.get();
+            if (includeInactive || c->enabled())
+                (c->*method)(std::forward<Args>(args)...);
         }
-    };
+    }
 
 }
 
