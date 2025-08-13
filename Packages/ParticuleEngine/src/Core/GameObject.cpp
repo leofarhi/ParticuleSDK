@@ -24,7 +24,6 @@ namespace Particule::Engine {
 
     void GameObject::SetActive(bool value)
     {
-        // État effectif du parent (indépendant de this->m_activeSelf)
         const bool parentActive =
             (transform.parent() == nullptr)
                 ? true
@@ -42,13 +41,11 @@ namespace Particule::Engine {
             if (now) CallComponent(&Component::OnEnable, false);
             else     CallComponent(&Component::OnDisable, false);
         } else {
-            // Si l'état effectif de this n'a pas changé, rien ne change pour les descendants
-            // (le parent effectif reste identique), on peut sortir.
+            // Si rien ne change pour this, rien ne change pour les descendants
             return;
         }
 
-        // Propage proprement aux enfants : on calcule pour chacun childWas/childNow
-        // et on passe ces valeurs comme "parentWas/parentNow" au niveau suivant.
+        // Propage proprement aux enfants
         auto propagate = [&](auto&& self, GameObject* parent, bool parentWas, bool parentNow) -> void {
             auto& kids = parent->transform.children();
             for (Transform* ct : kids) {

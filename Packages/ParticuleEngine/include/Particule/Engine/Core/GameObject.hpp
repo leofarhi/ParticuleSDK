@@ -23,6 +23,12 @@ namespace Particule::Engine {
         Scene *scene;
         std::vector<std::unique_ptr<Component>> components;
         friend class Scene;
+
+        GameObject() = delete;
+        GameObject(const GameObject&) = delete;
+        GameObject& operator=(const GameObject&) = delete;
+        GameObject(GameObject&&) = delete;            // ou implémente prudemment
+        GameObject& operator=(GameObject&&) = delete; // idem
     public:
         Transform transform;
         std::string name;
@@ -30,15 +36,9 @@ namespace Particule::Engine {
         Tag tag;
         bool isStatic;
 
-        GameObject() = delete;
         GameObject(Scene *scene);
         GameObject(Scene *scene, std::string name);
         ~GameObject() override;
-
-        GameObject(const GameObject&) = delete;
-        GameObject& operator=(const GameObject&) = delete;
-        GameObject(GameObject&&) = delete;            // ou implémente prudemment
-        GameObject& operator=(GameObject&&) = delete; // idem
 
         inline bool activeInHierarchy() const
         {

@@ -19,20 +19,44 @@ namespace Particule::Engine {
     {
     private:
         bool m_enabled;
+        Component(const Component&)            = delete;
+        Component& operator=(const Component&) = delete;
+        Component(Component&&)                 = delete;
+        Component& operator=(Component&&)      = delete;
+    protected:
+        // Hooks internes si on veut spécialiser plus tard le cycle d’activation
+        virtual void OnBecameEnabled()  {} // appelé juste AVANT OnEnable
+        virtual void OnBecameDisabled() {} // appelé juste AVANT OnDisable
     public:
         GameObject& gameObject;
-        Component(GameObject& gameObject) : m_enabled(true), gameObject(gameObject) {}
+        Component(GameObject& gameObject) noexcept : m_enabled(true), gameObject(gameObject) {}
         virtual ~Component() = default;
 
-        inline bool enabled() const { return m_enabled; }
-        void inline SetActive(bool value)
+        [[nodiscard]] inline bool enabled() const noexcept { return m_enabled; }
+
+        [[nodiscard]] inline bool isActiveAndEnabled() const
         {
-            if (value)
-                this->OnEnable();
-            else
-                this->OnDisable();
-            this->m_enabled = value;
-        };
+            return m_enabled && gameObject.activeInHierarchy();
+        }
+
+        inline void SetEnabled(bool value)
+        {
+            if (m_enabled == value) return; // pas de changement self
+
+            const bool wasEffective = isActiveAndEnabled();
+            m_enabled = value;
+            const bool nowEffective = isActiveAndEnabled();
+
+            if (wasEffective != nowEffective) {
+                if (nowEffective) {
+                    OnBecameEnabled();
+                    OnEnable();
+                } else {
+                    OnBecameDisabled();
+                    OnDisable();
+                }
+            }
+        }
 
         virtual void Awake() {};
         virtual void Start() {};
