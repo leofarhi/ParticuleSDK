@@ -22,8 +22,8 @@
 * **Fichier**
 
   * `Charger Image` : importe une image (.png, .jpg, .bmp)
-  * `Importer JSON` : charge un fichier `.json` de sprites existants
-  * `Sauvegarder JSON` : exporte les sprites et l'image sous forme de fichier `.json`
+  * `Importer Sprites` : charge un fichier `.sprites` de sprites existants
+  * `Sauvegarder Sprites` : exporte automatiquement un fichier `.sprites` (format JSON interne) à côté de l'image
   * `Quitter` : ferme l'éditeur
 
 * **Couleur de fond** : change la couleur d'arrière-plan de la zone d'édition
@@ -40,13 +40,17 @@ Couleurs disponibles : `dark`, `light`, `blue`, `green`, `red`, `yellow`, `purpl
 
 ---
 
-## 💾 Format JSON exporté
+## 💾 Format `.sprites` exporté
 
-L'export contient :
+Le fichier `.sprites` est un fichier JSON masqué, automatiquement enregistré avec le même nom que l’image et l’extension `.sprites`, placé **dans le même dossier** que l’image source.
+
+Exemple : si vous éditez `image.png`, un fichier `image.png.sprites` sera généré à côté.
+
+Il contient :
 
 ```json
 {
-  "image": "chemin/vers/image.png",
+  "image": "image.png",
   "sprites": [
     {"name": "NomDuSprite", "x": 10, "y": 20, "w": 32, "h": 32},
     ...
@@ -54,7 +58,7 @@ L'export contient :
 }
 ```
 
-* `image` : chemin relatif de l'image utilisée
+* `image` : nom de l'image associée (avec extension, sans chemin)
 * `sprites` : liste des rectangles nommés (en pixels)
 
 ---
@@ -63,17 +67,44 @@ L'export contient :
 
 * Nommez chaque sprite avec soin : le nom est utilisé pour l'import dans le moteur.
 * Utilisez la touche **Shift** pour accéder aux fonctions avancées (redimensionnement, renommage, info de debug).
-* Conservez le `.json` et l'image dans le même dossier pour éviter les chemins cassés.
+* Le fichier `.sprites` doit toujours être dans le **même dossier** que l’image associée.
 
 ---
 
-## 📌 Exemple d'intégration dans le moteur
+## 📎 Intégration avec le Makefile
 
-Après avoir créé vos sprites et exporté le `.json`, vous pouvez charger un sprite dans votre jeu avec :
+Pour que les sprites exportés via le **Sprite Editor** soient automatiquement pris en compte lors de la compilation, vous devez ajouter l'attribut `"include_sprites": true` à chaque texture concernée dans le bloc `assets_files.textures` de votre Makefile.
 
-```cpp
-Asset<Sprite> sprite(GetResourceID("assets/image.png:NomDuSprite"));
-sprite->Draw(100, 100);
+Cela permet à ParticuleCraft d’inclure directement les données de découpes depuis le fichier `.sprites` associé à l’image.
+
+### ✅ Exemple :
+
+```json
+"assets_files": {
+  "textures": [
+    {
+      "path": "Assets/common/entities/players.png",
+      "reference_path": "assets/entities/players.png",
+      "include_sprites": true
+    }
+  ],
+  "fonts": [],
+  "audio": [],
+  "other": []
+}
 ```
 
-> ⚠️ Actuellement, le chargement par nom de sprite (`image.png:Nom`) **n'est pas encore géré par l'AssetManager**. Cette fonctionnalité sera ajoutée ultérieurement.
+### 🔎 Comportement
+
+* Lorsqu’`include_sprites` est activé, le fichier `players.png.sprites` est automatiquement recherché dans le **même dossier** que l’image.
+* Toutes les découpes nommées seront intégrées au build et accessibles via `GetResourceID(<reference_path>:<NomDuSprite>)`.
+
+
+## 📌 Exemple d'intégration dans le moteur
+
+Après avoir créé vos sprites et exporté le `.sprites`, vous pouvez charger un sprite dans votre jeu avec :
+
+```cpp
+Asset<Sprite> sprite(GetResourceID("assets/image.png:icon_ui"));
+sprite->Draw(100, 100);
+```

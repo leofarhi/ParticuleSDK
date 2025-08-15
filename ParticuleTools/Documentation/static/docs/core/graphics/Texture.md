@@ -7,6 +7,9 @@ La classe `Texture` du Particule SDK permet de manipuler des images 2D, que ce s
 ## 📥 Chargement / Création
 
 ```cpp
+#include <Particule/Core/System/References/Resource.hpp>
+#include <Particule/Core/System/AssetManager.hpp>
+
 Texture* t = Texture::Load("assets/img.asset");   // Charge une image (à éviter)
 Texture::Unload(t);                               // Décharge proprement(à éviter)
 

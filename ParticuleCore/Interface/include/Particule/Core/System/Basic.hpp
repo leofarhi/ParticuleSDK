@@ -19,6 +19,9 @@
 #define DECLARE_BUILTIN_ASSET(id, type, ...) \
     static const type __builtin_asset_##id = type(__VA_ARGS__)
 
+#define DECLARE_INPUT(id, device, type, ...) \
+    static Inputs::Devices::device<type> __builtin_input_##id __VA_ARGS__
+
 namespace Particule::Core
 {
     constexpr double MY_PI = 3.14159265358979323846;

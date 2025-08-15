@@ -1,5 +1,6 @@
 #include <Particule/Core/ParticuleCore.hpp>
 #include <Particule/Core/System/AssetManager.hpp>
+#include <Particule/Core/System/References/Resource.hpp>
 
 using namespace Particule::Core;
 

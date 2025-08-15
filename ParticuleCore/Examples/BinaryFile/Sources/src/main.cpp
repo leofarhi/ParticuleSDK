@@ -1,5 +1,6 @@
 #include <Particule/Core/ParticuleCore.hpp>
 #include <Particule/Core/System/Redefine.hpp>
+#include <Particule/Core/System/References/Resource.hpp>
 #include <string>
 
 using namespace Particule::Core;
@@ -22,14 +23,12 @@ BasicWindow::~BasicWindow(){}
 
 void BasicWindow::OnStart()
 {
+    text = "default text";
+    font = AssetManager::Load<Font>(GetResourceID("assets/PressStart2P.ttf"));
+    File::OpenWith("text.txt", FileMode::Write, Endian::LittleEndian, [&](File* file) {
+        file->Write<char>("Hello, World!", 13);
+    });
     File* file = File::Open("text.txt", FileMode::Read, Endian::LittleEndian);
-    if (!file)
-    {
-        File::OpenWith("text.txt", FileMode::Write, Endian::LittleEndian, [&](File* file) {
-            file->Write<char>("Hello, World!", 13);
-        });
-    }
-    file = File::Open("text.txt", FileMode::Read, Endian::LittleEndian);
     if (file) {
         char buffer[14] = {0}; // 13 characters + null terminator
         file->Read(buffer, 13);
@@ -38,7 +37,6 @@ void BasicWindow::OnStart()
     } else {
         text = "Failed to open file.";
     }
-    font = AssetManager::Load<Font>(GetResourceID("assets/PressStart2P.ttf"));
 }
 
 void BasicWindow::OnDraw()

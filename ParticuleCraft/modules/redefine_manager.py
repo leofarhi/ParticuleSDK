@@ -8,15 +8,17 @@ class RedefineManager:
             "<Particule/Core/Graphics/Image/Texture.hpp>",
             "<Particule/Core/Graphics/Image/Sprite.hpp>",
             "<Particule/Core/Font/Font.hpp>",
-            "<Particule/Core/System/Input.hpp>",
+            "<Particule/Core/Inputs/Input.hpp>",
+            "<Particule/Core/Inputs/Devices.hpp>",
             "<Particule/Core/System/Basic.hpp>",
         ]
         # Chaque entrée est la liste de tokens passés à DECLARE_BUILTIN_ASSET
         # ex: ["TextureP4", "___&whatever"]
         self.asset_declarations: list[list[str]] = []
 
-        # ("NomSymbolique", "KEY_UP")  -> utilisé par GetInput
-        self.input_mappings: list[tuple[str, str]] = []
+        # ("NomSymbolique", "Device", "Type", [args])  -> utilisé par GetInput
+        # Ex: ("JUMP", "Keyboard", "Button", ["SDLK_SPACE"])
+        self.input_mappings: list[tuple[str, str, str, list[str]]] = []
 
         # ("NomRessource", 42)  -> utilisé par GetResourceID
         self.resource_mappings: list[tuple[str, int]] = []
@@ -33,9 +35,6 @@ class RedefineManager:
         code.append("#ifndef REDEFINE_HPP")
         code.append("#define REDEFINE_HPP")
         code.append("")
-        code.append("#include <Particule/Core/System/References/Input.hpp>")
-        code.append("#include <Particule/Core/System/References/Resource.hpp>")
-        code.append("")
         code.append("namespace Particule::Core")
         code.append("{")
         code.append(f"    #define EXTERNAL_ASSET_COUNT {external_asset_count}")
@@ -48,23 +47,28 @@ class RedefineManager:
     # ---------- References/Input.hpp ----------
     def _generate_reference_input_hpp(self) -> str:
         inputs_chain = ""
-        for key, value in self.input_mappings:
-            inputs_chain += f'\nCONST_STR_CMP(str, "{key}") ? Input({value}) : \\'
+        idx = 0
+        for key, device, type, args in self.input_mappings:
+            inputs_chain += f'\n(CONST_STR_CMP(str, "{key}") && std::is_same_v<TYPE, Inputs::{type}>) ? static_cast<const Inputs::Input<TYPE>*>(__builtInInputsRaw[{idx}]) : \\'
+            idx += 1
 
         code = []
         code.append("#ifndef REFERENCE_INPUT_HPP")
         code.append("#define REFERENCE_INPUT_HPP")
         code.append("")
-        code.append("#include <Particule/Core/System/Input.hpp>")
+        code.append("#include <Particule/Core/Inputs/Input.hpp>")
+        code.append("#include <Particule/Core/Inputs/Devices.hpp>")
         code.append("#include <Particule/Core/System/Basic.hpp>")
+        code.append("#include <type_traits>")
         code.append("")
         code.append("namespace Particule::Core")
         code.append("{")
+        code.append("extern void* __builtInInputsRaw[];")
         code.append("    #ifndef GetInput")
         if inputs_chain:
-            code.append(f"    #define GetInput(str)(\\{inputs_chain}\n    Input())")
+            code.append(f"    #define GetInput(TYPE, str)(\\{inputs_chain}\n    static_cast<const Inputs::Input<TYPE>*>(nullptr))")
         else:
-            code.append("    #define GetInput(str) Input()")
+            code.append("    #define GetInput(TYPE, str) static_cast<const Inputs::Input<TYPE>*>(nullptr)")
         code.append("    #endif")
         code.append("")
         code.append("}")
@@ -125,6 +129,20 @@ class RedefineManager:
         code.append("    nullptr,")
         code.append("};")
         code.append("")
+
+        idx = 0
+        for key, device, type, args in self.input_mappings:
+            if len(args) == 0:
+                code.append(f"DECLARE_INPUT({idx}, {device}, Inputs::{type});")
+            else:
+                code.append(f"DECLARE_INPUT({idx}, {device}, Inputs::{type}, ({', '.join(args)}));")
+            idx += 1
+        code.append("")
+        code.append("void* __builtInInputsRaw[] = {")
+        for idx in range(len(self.input_mappings)):
+            code.append(f"    (void*)&__builtin_input_{idx},")
+        code.append("    nullptr,")
+        code.append("};")
         code.append("} // namespace Particule::Core")
         code.append("")
 

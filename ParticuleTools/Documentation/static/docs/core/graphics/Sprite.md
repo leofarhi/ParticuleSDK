@@ -10,6 +10,9 @@ Elle permet d'extraire une portion d'une `Texture` (sprite sheet, atlas, etc.) e
 ### Par texture et rectangle
 
 ```cpp
+#include <Particule/Core/System/References/Resource.hpp>
+#include <Particule/Core/System/AssetManager.hpp>
+
 Asset<Texture> tex = AssetManager::Load<Texture>(GetResourceID("assets/sprites.png"));
 Rect rect = {0, 0, 32, 32};
 Sprite sprite(tex, rect);

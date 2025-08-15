@@ -29,8 +29,11 @@ class BuilderSDL2(Builder):
         for asset in self.asset_manager.refactored_assets:
             if asset.category == "sprites":
                 redefine.asset_declarations.append(["Sprite", f"GetResourceID(\"{asset.data['texture']}\")",f"Rect({asset.data['x']}, {asset.data['y']}, {asset.data['w']}, {asset.data['h']})"])
-        for k, v in self.config_data["inputs"].items():
-            redefine.input_mappings.append((k, f"sdl2::{v}"))
+
+        redefine.additional_code_before += "using namespace sdl2;\n"
+        for k, device in self.config_data["inputs"].items():
+            redefine.input_mappings.append((k, device[0], device[1][0], device[1][1].values()))
+
         for idx, asset in enumerate(self.asset_manager.refactored_assets):
             redefine.resource_mappings.append((asset.reference_path, idx))
         redefine.assets_path = self.config_data["output_assets_dir"]

@@ -2,7 +2,8 @@
 #define WINDOW_HPP
 #include <string>
 #include <Particule/Core/Graphics/Color.hpp>
-#include <Particule/Core/System/Input.hpp>
+#include <Particule/Core/Inputs/Input.hpp>
+#include <Particule/Core/Inputs/Devices.hpp>
 
 #include <Particule/Core/System/gint.hpp>
 
@@ -25,7 +26,6 @@ namespace Particule::Core
         // Méthodes principales
         inline void Display() { azrp_update(); }
         inline void UpdateInput() { cleareventflips();clearevents(); }
-        inline Input GetKey() { return Input(getkey_opt(GETKEY_REP_ALL, NULL).key); }
         inline void Clear() { azrp_clear(C_BLACK); }
         inline void Clear(Color color) { azrp_clear(color.Raw()); }
     

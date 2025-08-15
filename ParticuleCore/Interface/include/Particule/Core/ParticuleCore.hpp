@@ -6,11 +6,11 @@
 #include <Particule/Core/Graphics/Shapes/Pixel.hpp>
 #include <Particule/Core/Graphics/Shapes/Rect.hpp>
 #include <Particule/Core/Graphics/Color.hpp>
+#include <Particule/Core/Inputs/Input.hpp>
+#include <Particule/Core/Inputs/Devices.hpp>
 #include <Particule/Core/System/App.hpp>
 #include <Particule/Core/System/Basic.hpp>
-#include <Particule/Core/System/Input.hpp>
 #include <Particule/Core/System/File.hpp>
-#include <Particule/Core/System/Input.hpp>
 //#include <Particule/Core/System/Redefine.hpp>
 #include <Particule/Core/System/Time.hpp>
 #include <Particule/Core/System/Window.hpp>

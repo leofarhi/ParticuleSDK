@@ -3,7 +3,8 @@
 #include <string>
 #include <Particule/Core/Graphics/Color.hpp>
 #include <Particule/Core/System/sdl2.hpp>
-#include <Particule/Core/System/Input.hpp>
+#include <Particule/Core/Inputs/Input.hpp>
+#include <Particule/Core/Inputs/Devices.hpp>
 #include <list>
 
 namespace Particule::Core
@@ -28,20 +29,6 @@ namespace Particule::Core
         // Méthodes principales
         inline virtual void Display() { sdl2::SDL_RenderPresent(renderer); }
         virtual void UpdateInput();
-        inline Input GetKey() {
-            while (true)
-            {
-                UpdateInput();
-                sdl2::SDL_Delay(15); // Attendre un court instant pour éviter une boucle infinie
-                //get first Keydown event
-                for (auto& event : events)
-                {
-                    if (event.type == sdl2::SDL_KEYDOWN)
-                        return Input(event.key.keysym.sym);
-                }
-            }
-            return Input(); // Retourner le premier événement de la liste
-         } // Remplacer par la logique d'entrée appropriée
         inline virtual void Clear()
         { 
             sdl2::SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

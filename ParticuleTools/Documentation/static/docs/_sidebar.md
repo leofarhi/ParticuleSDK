@@ -23,7 +23,7 @@
       - [Window](core/system/Window.md)
       - [App](core/system/App.md)
     - 🕹️ Entrées
-      - [Input](core/system/Input.md)
+      - [Input](core/inputs/Inputs.md)
     - 📁 Fichiers
       - [File](core/system/File.md)
     - ⏱️ Temps

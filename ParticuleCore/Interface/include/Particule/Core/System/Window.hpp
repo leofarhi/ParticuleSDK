@@ -2,7 +2,8 @@
 #define WINDOW_HPP
 #include <string>
 #include <Particule/Core/Graphics/Color.hpp>
-#include <Particule/Core/System/Input.hpp>
+#include <Particule/Core/Inputs/Input.hpp>
+#include <Particule/Core/Inputs/Devices.hpp>
 
 namespace Particule::Core
 {
@@ -17,7 +18,6 @@ namespace Particule::Core
 
         void Display();
         void UpdateInput();
-        Input GetKey();
         void Clear();
         void Clear(Color color);
         int Width();

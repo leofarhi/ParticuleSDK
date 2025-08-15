@@ -1,5 +1,6 @@
 #include <Particule/Core/ParticuleCore.hpp>
 #include <Particule/Core/System/Redefine.hpp>
+#include <Particule/Core/System/References/Input.hpp>
 
 using namespace Particule::Core;
 
@@ -20,7 +21,7 @@ BasicWindow::~BasicWindow(){}
 
 void BasicWindow::OnUpdate()
 {
-    pressed = GetInput("OK").IsKeyPressed();
+    pressed = GetInput(Inputs::Button,"OK")->IsPressed();
 }
 
 void BasicWindow::OnDraw()

@@ -46,9 +46,8 @@ class MakeAppConfig(Distribution):
 
         self.inputs = VarFreeDict(
             VarString("", "Key name"),
-            VarEnum(Keys, 'SDLK_UNKNOWN', "Input key"),
-            {},
-            "Input keys to be mapped"
+            VarSelect({"Keyboard": VarSelect({"Button":VarDict({"keycode":VarEnum(Keys, 'SDLK_UNKNOWN', "Input key")})})}),
+            description="Input keys to be mapped"
         )
 
         self.icon = VarPath("icons.ico", "Icon file for the application", filetypes=[("Icon Files", "*.ico")])

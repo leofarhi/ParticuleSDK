@@ -300,3 +300,126 @@ class VarFreeDict(Var):
         config["key_type"] = self.key_type.to_config()
         config["value_type"] = self.value_type.to_config()
         return config
+
+
+class VarSelect(Var):
+    """
+    Selecteur de variables : une option parmi plusieurs, chaque option ayant son propre type Var.
+    Exemple :
+        s = VarSelect(
+            choices={
+                "Choix 1": VarInt(default_value=5, description="Un entier"),
+                "Choix 2": VarBool(default_value=True, description="Un booléen"),
+            },
+            default_value=("Choix 1", VarInt(15))
+        )
+
+    Règles :
+    - Si default_value est None :
+        * s'il y a des choices : on prend le premier label et on clone son Var avec sa valeur par défaut
+        * sinon : value = None
+    - Lors du load :
+        * value peut être un tuple (label, valeur_brule) ou (label, VarInstance)
+        * le type du VarInstance doit correspondre au gabarit de `choices[label]`, sinon on lève une ValueError
+    """
+
+    def __init__(
+        self,
+        choices: Dict[str, Var],
+        default_value: Optional[tuple[str, Any]] = None,
+        *args,
+        **kwargs,
+    ) -> None:
+        if not isinstance(choices, dict):
+            raise ValueError("choices doit être un dictionnaire {label: Var}.")
+        for k, v in choices.items():
+            if not isinstance(v, Var):
+                raise ValueError(f"choices['{k}'] doit être une instance de Var.")
+
+        # On doit définir choices AVANT l'appel à super().__init__ car load() les utilise.
+        self.choices: Dict[str, Var] = choices
+
+        # Calcul du default_value à passer à super().__init__ (qui appellera load()).
+        if default_value is None:
+            if self.choices:
+                first_key = next(iter(self.choices))
+                # On passe une donnée 'brute' attendue par le Var cible (sa default_value)
+                dv = (first_key, self.choices[first_key].default_value)
+            else:
+                dv = None
+        else:
+            # Laisser load() valider / convertir
+            dv = default_value
+
+        super().__init__("select", dv, *args, **kwargs)
+
+    def load(self, value: Any) -> None:
+        # Cas aucun choix défini
+        if not self.choices:
+            if value is None:
+                self.value = None
+                return
+            raise ValueError(f"Invalid value for {self.description}. Aucun choix n'est disponible.")
+
+        # None → pas de sélection
+        if value is None:
+            self.value = None
+            return
+
+        # On accepte soit un dict {"choice":..., "value":...}, soit un tuple (choice, value)
+        if isinstance(value, dict):
+            if "choice" not in value or "value" not in value:
+                raise ValueError(
+                    f"Invalid value for {self.description}. Attendu un dict {{'choice':..., 'value':...}}."
+                )
+            choice_key = value["choice"]
+            raw_val = value["value"]
+        else:
+            # tuple attendu
+            try:
+                choice_key, raw_val = value
+            except Exception:
+                raise ValueError(
+                    f"Invalid value for {self.description}. Attendu un tuple (choice, value)."
+                )
+
+        # Validation du label
+        if choice_key not in self.choices:
+            raise ValueError(
+                f"Invalid value for {self.description}. Le choix '{choice_key}' n'existe pas. "
+                f"Choix possibles: {list(self.choices.keys())}."
+            )
+
+        # On part d'un clone du gabarit
+        template_var = self.choices[choice_key].clone()
+
+        # Deux cas : raw_val est une instance de Var OU une donnée brute
+        if isinstance(raw_val, Var):
+            # Le type doit correspondre (même classe ou au moins même var_type)
+            same_class = raw_val.__class__ is template_var.__class__
+            same_vartype = getattr(raw_val, "var_type", None) == getattr(template_var, "var_type", None)
+            if not (same_class or same_vartype):
+                raise ValueError(
+                    f"Invalid value for {self.description}. Le type de la valeur pour '{choice_key}' "
+                    f"({raw_val.__class__.__name__}/{getattr(raw_val, 'var_type', None)}) ne correspond pas au type attendu "
+                    f"({template_var.__class__.__name__}/{template_var.var_type})."
+                )
+            # Charger à partir des données de l'instance fournie
+            template_var.load(raw_val.to_data())
+        else:
+            # Donnée brute → on laisse le Var cible faire la conversion/validation
+            template_var.load(raw_val)
+
+        # Stockage : (label, VarInstance porteur de la valeur)
+        self.value = (choice_key, template_var)
+
+    def to_data(self) -> Any:
+        if self.value is None:
+            return None
+        choice_key, var_instance = self.value
+        return (choice_key, var_instance.to_data())
+
+    def to_config(self) -> Dict[str, Any]:
+        config = super().to_config()
+        config["choices"] = {k: v.to_config() for k, v in self.choices.items()}
+        return config

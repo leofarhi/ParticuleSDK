@@ -28,7 +28,15 @@
             "other": []
         },
         "inputs": {
-            "OK": "KEY_EXE"
+            "OK": [
+                "Keyboard",
+                [
+                    "Button",
+                    {
+                        "keycode": "KEY_EXE"
+                    }
+                ]
+            ]
         },
         "display_name": "MyApp",
         "icon_uns": "Assets/cg/icon-uns.png",
@@ -44,7 +52,15 @@
             "other": []
         },
         "inputs": {
-            "OK": "SDLK_SPACE"
+            "OK": [
+                "Keyboard",
+                [
+                    "Button",
+                    {
+                        "keycode": "SDLK_SPACE"
+                    }
+                ]
+            ]
         },
         "icon": "Assets/win/icon.png",
         "console": false,
@@ -59,7 +75,15 @@
             "other": []
         },
         "inputs": {
-            "OK": "SDLK_SPACE"
+            "OK": [
+                "Keyboard",
+                [
+                    "Button",
+                    {
+                        "keycode": "SDLK_SPACE"
+                    }
+                ]
+            ]
         },
         "icon": "Assets/win/icon.ico",
         "console": false,

@@ -13,6 +13,7 @@ namespace Particule::Core
             File file(fd_file, mode, endian);
             func(&file);
             fclose(fd_file);
+            file.file = nullptr; // Prevent destructor from closing the file again
         }
         return is_open;
     }

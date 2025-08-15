@@ -1,12 +1,13 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..","..")))
-from ParticuleCraft.config.fields import Var, VarBool, VarInt, VarFloat, VarString, VarPath, VarEnum, VarList, VarDict, VarFreeDict
+from ParticuleCraft.config.fields import *
 
 import customtkinter as ctk
 from typing import Any, Dict
 from functools import partial
 from enum import Enum
 import tkinter.filedialog as fd
+from ResizableScrollableFrame import ResizableScrollableFrame
 
 class VarVisibility(Enum):
     SHOW_COMMON = "common"
@@ -108,8 +109,13 @@ def render_var_widget(name: str, var: Var, master: ctk.CTkFrame, row: int, makef
         tk_var = ctk.StringVar(value=var.value)
         create_label(master, label_text).grid(row=row, column=0, sticky="w", padx=5, pady=5)
 
-        entry = ctk.CTkEntry(master, textvariable=tk_var)
-        entry.grid(row=row, column=1, sticky="ew", padx=5, pady=5)
+        # Frame qui contient l'entrée + le bouton
+        entry_frame = ctk.CTkFrame(master, fg_color="transparent")
+        entry_frame.grid(row=row, column=1, sticky="ew", padx=5, pady=5)
+        entry_frame.grid_columnconfigure(0, weight=1)  # entry s'étend
+
+        entry = ctk.CTkEntry(entry_frame, textvariable=tk_var)
+        entry.grid(row=0, column=0, sticky="ew")
 
         tk_var.trace_add("write", partial(on_var_change, var, tk_var))
 
@@ -122,12 +128,12 @@ def render_var_widget(name: str, var: Var, master: ctk.CTkFrame, row: int, makef
                     filetypes = var.filetypes
                     path = fd.askopenfilename(filetypes=[(f, f) for f in filetypes])
                 if path:
-                    #relatif au makefile
                     if makefile_path:
-                        path = os.path.relpath(path, os.path.dirname(makefile_path)).replace("\\","/")
+                        path = os.path.relpath(path, os.path.dirname(makefile_path)).replace("\\", "/")
                     tk_var.set(path)
-            browse_btn = ctk.CTkButton(master, text="📂", width=32, command=browse)
-            browse_btn.grid(row=row, column=2, padx=5, pady=5)
+
+            browse_btn = ctk.CTkButton(entry_frame, text="📂", width=32, command=browse)
+            browse_btn.grid(row=0, column=1, padx=(5, 0))  # petit espace à gauche
 
 
     elif isinstance(var, VarEnum):
@@ -152,7 +158,7 @@ def render_var_widget(name: str, var: Var, master: ctk.CTkFrame, row: int, makef
         container.grid(row=row + 1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
         container.grid_columnconfigure(0, weight=1)
 
-        scroll_frame = ctk.CTkScrollableFrame(container, label_text=label_text)
+        scroll_frame = ResizableScrollableFrame(container, label_text=label_text)
         scroll_frame.grid(row=0, column=0, sticky="nsew")
         scroll_frame.grid_columnconfigure(0, weight=1)
 
@@ -199,7 +205,7 @@ def render_var_widget(name: str, var: Var, master: ctk.CTkFrame, row: int, makef
         container.grid(row=row, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
         container.grid_columnconfigure(0, weight=1)
 
-        scroll_frame = ctk.CTkScrollableFrame(container, label_text=label_text)
+        scroll_frame = ResizableScrollableFrame(container, label_text=label_text)
         scroll_frame.grid(row=0, column=0, sticky="nsew")
         scroll_frame.grid_columnconfigure(0, weight=1)
 
@@ -243,6 +249,77 @@ def render_var_widget(name: str, var: Var, master: ctk.CTkFrame, row: int, makef
         add_btn.grid(row=1, column=0, sticky="ew", pady=5)
 
         refresh_dict(var)
+
+    elif isinstance(var, VarSelect):
+        # Label du champ
+        create_label(master, label_text).grid(row=row, column=0, columnspan=2, sticky="we", padx=5, pady=(6, 0))
+
+        # Frame contenant le dropdown (en haut) et la valeur (en dessous)
+        container = ctk.CTkFrame(master, fg_color="transparent", border_width=1, corner_radius=6, border_color="#666")
+        container.grid(row=row + 1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        container.grid_columnconfigure(0, weight=1)
+
+        # Sous-frame pour le contenu de la valeur sélectionnée
+        value_frame = ctk.CTkFrame(container, fg_color="transparent")
+        value_frame.grid(row=1, column=0, sticky="ew", padx=4, pady=(4, 2))
+        value_frame.grid_columnconfigure(0, weight=1)
+
+        # Préparation des choix
+        choices_labels = list(var.choices.keys())
+        # Déterminer le label sélectionné actuellement
+        if var.value is not None and isinstance(var.value, tuple) and len(var.value) == 2:
+            current_label = var.value[0]
+            current_var = var.value[1]
+            if current_label not in var.choices:
+                current_label = choices_labels[0] if choices_labels else ""
+                current_var = None
+        else:
+            current_label = choices_labels[0] if choices_labels else ""
+            current_var = None
+
+        # Fonction pour (re)rendre le contenu en dessous du dropdown
+        def refresh_value_content():
+            for w in value_frame.winfo_children():
+                w.destroy()
+            if var.value is None:
+                return
+            selected_label, selected_var = var.value
+            # Rendre le widget du Var sélectionné
+            render_var_widget(f"{name}_{selected_label}", selected_var, value_frame, 0, makefile_path)
+
+        # Changement de sélection du dropdown
+        def on_choice_change(new_choice):
+            if not choices_labels or new_choice not in var.choices:
+                return
+            # Créer une nouvelle instance (clone) du Var gabarit et charger sa valeur par défaut
+            new_inst = var.choices[new_choice].clone()
+            new_inst.load(new_inst.default_value)
+            # Mettre à jour la valeur du VarSelect
+            try:
+                # On passe l'instance directement, VarSelect vérifiera la compatibilité
+                var.load((new_choice, new_inst))
+            except Exception:
+                # fallback : ne rien casser si une erreur survient
+                var.value = (new_choice, new_inst)
+            refresh_value_content()
+
+        # Dropdown des choix
+        tk_var_choice = ctk.StringVar(value=current_label)
+        dropdown = ctk.CTkOptionMenu(container, variable=tk_var_choice, values=choices_labels, command=on_choice_change)
+        dropdown.grid(row=0, column=0, sticky="ew", padx=4, pady=4)
+
+        # Initialiser var.value si nécessaire puis afficher
+        if var.value is None or var.value[0] != current_label or current_var is None:
+            on_choice_change(current_label if current_label else "")
+        else:
+            # S'assurer que l'instance correspond au gabarit (sinon la recréer)
+            tmpl = var.choices.get(current_label)
+            if tmpl is not None and not isinstance(current_var, tmpl.__class__):
+                on_choice_change(current_label)
+            else:
+                refresh_value_content()
+
+        row += 1
 
     else:
         create_label(master, f"{label_text} (non géré)").grid(row=row, column=0, columnspan=2, sticky="w", padx=5, pady=5)

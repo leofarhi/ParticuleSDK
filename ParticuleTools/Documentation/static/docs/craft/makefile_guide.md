@@ -36,7 +36,7 @@ Ce bloc contient la configuration de base partagée entre toutes les distributio
 | `is_library`       | `bool`       | Compile le projet comme une bibliothèque. |
 | `clean`            | `bool`       | Vide le dossier de build avant compilation. |
 | `debug`            | `bool`       | Active le mode debug (si supporté). |
-| `packages`         | `list`       | Intégre automatiquement tous les paquets souhaités. |
+| `packages`         | `list`       | Intègre automatiquement des paquets (`["ParticuleEngine"]`). |
 | `source_files`     | `list`       | Liste des fichiers source à compiler. |
 | `include_paths`    | `list`       | Répertoires à inclure pour le compilateur. |
 | `library_paths`    | `list`       | Répertoires à inclure pour l’éditeur de liens. |
@@ -47,9 +47,48 @@ Ce bloc contient la configuration de base partagée entre toutes les distributio
 | `project_name`     | `string`     | Nom du projet (affiché parfois en GUI). |
 | `custom_makeconfig`| `list`       | Fichiers `.py` contenant du build personnalisé. |
 
-### 🧩 Système Custom
+### 📦 Paquets
 
-Vous pouvez ajouter vos propres étapes de build via des scripts Python dans `custom_makeconfig`.
+L’attribut `packages` permet d’intégrer automatiquement des bibliothèques supplémentaires (ex: `ParticuleEngine`, `ParticuleTools`, etc.). Ces paquets sont configurés automatiquement pour votre plateforme.
+
+Par défaut, seul le **ParticuleCore** est compilé. Pour bénéficier du système de scènes, GameObjects et composants, ajoutez `ParticuleEngine`.
+
+---
+
+## 🎮 Inputs typés
+
+Chaque distribution peut définir un bloc `inputs` permettant de configurer finement les contrôles clavier, souris, manette, etc.
+
+Un `Input` typé est défini par :
+
+- Le **device** (`"Keyboard"`, `"Mouse"`, etc.)
+- Le **type d’entrée** (`"Button"`, `"Axis1D"`, `"Axis2D"`, `"Pointer"`, etc.)
+- Les **paramètres spécifiques** à ce couple device/type.
+
+Exemple pour Windows (clavier) :
+
+```json
+"inputs": {
+  "UP": [
+    "Keyboard",
+    ["Button", { "keycode": "SDLK_UP" }]
+  ],
+  "DOWN": [
+    "Keyboard",
+    ["Button", { "keycode": "SDLK_DOWN" }]
+  ]
+}
+```
+
+ℹ️ Chaque **distribution** possède ses propres devices, donc ce bloc doit être placé **dans le bloc de distribution**, pas dans `common`.
+
+Vous pouvez lister et modifier dynamiquement les entrées disponibles avec :
+
+```bash
+ParticuleCraft configure --target Windows
+```
+
+Ou utiliser **ParticuleCraftUI** pour une interface plus ergonomique.
 
 ---
 
@@ -76,12 +115,6 @@ Les **fonts** doivent aussi spécifier :
 
 ---
 
-## 🎮 Inputs (Touches de commande)
-
-Certaines distributions supportent une clé `inputs` pour remapper les touches clavier à des noms spécifiques. C’est un dictionnaire `NomPerso : TouchePhysique`.
-
----
-
 ## 💡 Bonnes pratiques
 
 - Utilisez des **chemins relatifs** pour plus de portabilité.
@@ -100,7 +133,7 @@ Certaines distributions supportent une clé `inputs` pour remapper les touches c
     "is_library": false,
     "clean": true,
     "debug": false,
-    "packages": [],
+    "packages": ["ParticuleEngine"],
     "source_files": ["Sources/main.cpp"],
     "include_paths": ["Sources/include"],
     "project_name": "MyApp",
@@ -113,6 +146,9 @@ Certaines distributions supportent une clé `inputs` pour remapper les touches c
       "fonts": [],
       "audio": [],
       "other": []
+    },
+    "inputs": {
+      "UP": ["Keyboard", ["Button", { "keycode": "SDLK_UP" }]]
     }
   }
 }

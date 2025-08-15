@@ -1,22 +1,15 @@
 #ifndef REFERENCE_INPUT_HPP
 #define REFERENCE_INPUT_HPP
 
-#include <Particule/Core/System/Input.hpp>
+#include <Particule/Core/Inputs/Input.hpp>
+#include <Particule/Core/Inputs/Devices.hpp>
 #include <Particule/Core/System/Basic.hpp>
 
 namespace Particule::Core
 {
     #ifndef GetInput
-    #define GetInput(str) Input()
+    #define GetInput(TYPE, str)(static_cast<const Inputs::Input<TYPE>*>(nullptr))
     #endif
-
-    /*Exemple de redéfinition de GetInput pour le compilateur GCC
-    #define GetInput(str)(\
-        CONST_STR_CMP(str, "A") ? Input(KEY_UP) : \
-        CONST_STR_CMP(str, "B") ? Input(KEY_DOWN) : \
-        Input()\
-        )
-    */
 }
 
 #endif // REFERENCE_INPUT_HPP

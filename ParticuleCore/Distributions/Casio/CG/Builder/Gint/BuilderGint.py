@@ -64,8 +64,8 @@ class BuilderGint(Builder):
                 uuid = self.uuid_manager.get_uuid(asset.data["path"])
                 redefine.additional_code_before += f"extern __gint_lib_font_t ___FONT_{uuid};\n"
                 redefine.asset_declarations.append(["Font", f"std::span(___FONT_{uuid}.data, ___FONT_{uuid}.size)"])
-        for k, v in self.config_data["inputs"].items():
-            redefine.input_mappings.append((k, f"{v}"))
+        for k, device in self.config_data["inputs"].items():
+            redefine.input_mappings.append((k, device[0], device[1][0], device[1][1].values()))
         for idx, asset in enumerate(self.asset_manager.refactored_assets):
             redefine.resource_mappings.append((asset.reference_path, idx))
         redefine.assets_path = self.config_data["output_assets_dir"]
