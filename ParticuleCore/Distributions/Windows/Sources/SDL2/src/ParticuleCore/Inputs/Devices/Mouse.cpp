@@ -3,6 +3,7 @@
 #include <Particule/Core/System/App.hpp>
 #include <Particule/Core/System/Window.hpp>
 #include <iostream>
+#include <algorithm>
 
 using namespace Particule::Core;
 using namespace Particule::Core::Inputs::Devices;

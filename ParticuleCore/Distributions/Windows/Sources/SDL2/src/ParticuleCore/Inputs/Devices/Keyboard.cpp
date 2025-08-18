@@ -2,6 +2,7 @@
 #include <Particule/Core/System/sdl2.hpp>
 #include <Particule/Core/System/App.hpp>
 #include <Particule/Core/System/Window.hpp>
+#include <algorithm>
 
 using namespace Particule::Core;
 using namespace Particule::Core::Inputs::Devices;
