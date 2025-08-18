@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <chrono>
+#include <optional>
 #include <Particule/Core/System/sdl2.hpp>
 
 namespace Particule::Core {
