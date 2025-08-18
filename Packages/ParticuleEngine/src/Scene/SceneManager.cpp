@@ -109,8 +109,8 @@ namespace Particule::Engine {
                     [&](const std::unique_ptr<Scene>& up){ return to_unload.count(up.get()) > 0; }),
                 loadedScenes.end());
             to_unload.clear();
-
             // Load requested
+            int st_call = loadedScenes.size();
             for (int index : to_load) {
                 auto& loader = availableScenes[index];
                 // 1) Alloue la scène une seule fois avec le NOM source de vérité
@@ -120,13 +120,21 @@ namespace Particule::Engine {
                 loader.loadScene(*s);
                 // 3) Adopte ownership et lance le cycle de vie
                 loadedScenes.push_back(std::move(owned));
-                s->CallAllComponents(&Component::Awake, true);
-                s->CallAllComponents(&Component::OnEnable, false);
-                s->CallAllComponents(&Component::Start, false);
             }
-            to_load.clear();
             AssetManager::UnloadUnused();
             AssetManager::LoadUsed();
+            //pour chaque scène chargée, appelle les composants Awake, OnEnable et Start
+            for (int st = st_call; st < loadedScenes.size(); ++st)
+            {
+                auto& up = loadedScenes[st];
+                if (up)
+                {
+                    up->CallAllComponents(&Component::Awake, true);
+                    up->CallAllComponents(&Component::OnEnable, false);
+                    up->CallAllComponents(&Component::Start, false);
+                }
+            }
+            to_load.clear();
             loading = false;
         }
 

@@ -29,21 +29,22 @@ namespace Particule::Core
     void Time::Update()
     {
         prof_leave_norec(m_timer);
+        deltaTime = prof_time(m_timer);
         this->m_timer = prof_make();
         prof_enter_norec(m_timer);
     }
 
     uint32_t Time::DeltaTime()
     {
-        prof_leave_norec(m_timer);
-        uint32_t delta = prof_time(m_timer);
-        prof_enter_norec(m_timer);
-        return delta;
+        return deltaTime;
     }
 
     uint32_t Time::TimeSinceStart()
     {
-        return prof_time(m_startTime);
+        prof_leave_norec(m_startTime);
+        uint32_t elapsed = prof_time(m_startTime);
+        prof_enter_norec(m_startTime);
+        return elapsed;
     }
 
     void Time::Delay(double time)

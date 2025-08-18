@@ -46,8 +46,17 @@ class MakeAppConfig(Distribution):
 
         self.inputs = VarFreeDict(
             VarString("", "Key name"),
-            VarSelect({"Keyboard": VarSelect({"Button":VarDict({"keycode":VarEnum(Keys, 'SDLK_UNKNOWN', "Input key")})})}),
-            description="Input keys to be mapped"
+            VarSelect(
+                {
+                    "Keyboard": VarSelect({"Button":VarDict({"keycode":VarEnum(Keys, 'SDLK_UNKNOWN', "Input key")})}),
+                    "Mouse": VarSelect({
+                        "Button":VarDict({"keycode":VarEnum(
+                            ["SDL_BUTTON_LEFT", "SDL_BUTTON_RIGHT", "SDL_BUTTON_MIDDLE", "SDL_BUTTON_X1", "SDL_BUTTON_X2"],
+                            'SDL_BUTTON_LEFT', "Input key")}),
+                        "Pointer": VarDict({})
+                    }),
+                }),
+                description="Input keys to be mapped"
         )
 
         self.icon = VarPath("icons.ico", "Icon file for the application", filetypes=[("Icon Files", "*.ico")])

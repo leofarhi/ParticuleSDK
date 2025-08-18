@@ -23,7 +23,7 @@ namespace Particule::Core
     {
         if (w <= 0 || h <= 0)
             return;
-        azrp_rect(x, y, w-1, h-1, color.Raw());
+        azrp_rect(x, y, x + w-1, y + h-1, color.Raw());
     }
 }
 

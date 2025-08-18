@@ -49,12 +49,12 @@ namespace Particule::Core
                 this->Close();
             if (event.key.repeat)
                 continue;
-            if (event.type == sdl2::SDL_KEYDOWN) // Vérifier si l'événement est une touche enfoncée
+            if (event.type == sdl2::SDL_KEYDOWN || event.type == sdl2::SDL_MOUSEBUTTONDOWN) // Vérifier si l'événement est une touche enfoncée
             {
                 this->events.push_back(event); // Ajouter l'événement à la liste des événements
                 this->eventsHeld.push_back(event); // Ajouter l'événement à la liste des événements maintenus
             }
-            if (event.type == sdl2::SDL_KEYUP) // Vérifier si l'événement est une touche relâchée
+            else if (event.type == sdl2::SDL_KEYUP || event.type == sdl2::SDL_MOUSEBUTTONUP) // Vérifier si l'événement est une touche relâchée
             {
                 //Trouver toute les touches maintenues et les supprimer de la liste des événements maintenus
                 auto it = std::remove_if(eventsHeld.begin(), eventsHeld.end(), [&](const sdl2::SDL_Event& e) {
@@ -62,6 +62,10 @@ namespace Particule::Core
                 });
                 eventsHeld.erase(it, eventsHeld.end()); // Supprimer les événements maintenus de la liste
                 this->events.push_back(event); // Ajouter l'événement à la liste des événements
+            }
+            else
+            {
+                this->events.push_back(event);
             }
         }
     }

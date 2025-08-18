@@ -145,7 +145,11 @@ def render_var_widget(name: str, var: Var, master: ctk.CTkFrame, row: int, makef
 
     elif isinstance(var, VarDict):
         create_label(master, label_text).grid(row=row, column=0, columnspan=2, sticky="we", padx=5, pady=(6, 0))
-        subframe = ctk.CTkFrame(master,fg_color="transparent",border_width=1,corner_radius=6,border_color="#666")
+        if len(var.value) == 0:
+            #mettre la plus petite taille pour la frame
+            subframe = ctk.CTkFrame(master,fg_color="transparent",border_width=1,corner_radius=6,border_color="#666", height=30)
+        else:
+            subframe = ctk.CTkFrame(master,fg_color="transparent",border_width=1,corner_radius=6,border_color="#666")
         subframe.grid(row=row + 1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         subframe.grid_columnconfigure(1, weight=1)
         sub_row = 0

@@ -22,7 +22,7 @@ namespace Particule::Core::Inputs
 
     // État complet d'un pointer
     struct Pointer {
-        Vector2<fixed12_32> pos {0,0};     // [0,1]²
+        Vector2<int> pos {0,0};     // position absolue (pixels)
         Vector2<fixed12_32> delta {0,0};   // delta dans le même espace que pos
         Vector2<fixed12_32> scroll {0,0};  // vertical/horizontal
         Button buttons[(int)PointerButton::Count]{}; // L/R/M/X1/X2

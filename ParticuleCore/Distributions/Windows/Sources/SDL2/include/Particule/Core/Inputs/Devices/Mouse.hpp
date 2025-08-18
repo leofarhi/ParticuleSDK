@@ -14,7 +14,7 @@ namespace Particule::Core::Inputs::Devices
         explicit Mouse(){}
 
     protected:
-        Inputs::Pointer get() const override { return Inputs::Pointer{}; }
+        Inputs::Pointer get() const override;
     };
 
     // ---- Mouse<Button> (optionnel) ----
@@ -24,7 +24,7 @@ namespace Particule::Core::Inputs::Devices
         explicit Mouse(Inputs::PointerButton button) : m_button(button) {}
 
     protected:
-        Inputs::Button get() const override { return Inputs::Button{}; }
+        Inputs::Button get() const override;
 
     private:
         Inputs::PointerButton m_button;

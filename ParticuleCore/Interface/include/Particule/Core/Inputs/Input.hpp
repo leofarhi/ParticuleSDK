@@ -57,7 +57,7 @@ namespace Particule::Core::Inputs
     public:
         virtual ~Input() = default;
 
-        Vector2<fixed12_32> Position() const { return get().pos; }
+        Vector2<int> Position() const { return get().pos; }
         Vector2<fixed12_32> Delta() const { return get().delta; }
         Vector2<fixed12_32> Scroll() const { return get().scroll; }
         const Inputs::Button& Button(Inputs::PointerButton b) const { return get().button(b); }

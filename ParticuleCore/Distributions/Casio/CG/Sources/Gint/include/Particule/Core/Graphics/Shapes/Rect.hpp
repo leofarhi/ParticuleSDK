@@ -23,7 +23,7 @@ namespace Particule::Core
     {
         if (w <= 0 || h <= 0)
             return;
-        drect(x, y, w-1, h-1, color.Raw());
+        drect(x, y, x + w-1, y + h-1, color.Raw());
     }
 }
 

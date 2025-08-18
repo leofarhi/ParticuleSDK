@@ -80,7 +80,9 @@ namespace Particule::Core
         };
         inline Color ReadPixel(int x, int y)
         {
-            return Color(static_cast<ColorRaw>(ReadPixelRaw(x, y)));
+            const int i = _getPixel(x, y);
+            if (i == _alphaValue) return Color::Alpha;
+            return Color(static_cast<ColorRaw>(_decodePixel(i)));
         };
 
         //Secure : Check if x and y are in the texture : Slower

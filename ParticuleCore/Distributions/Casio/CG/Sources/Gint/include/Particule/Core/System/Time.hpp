@@ -11,6 +11,7 @@ namespace Particule::Core
     {
     private:
         prof_t m_timer;
+        uint32_t deltaTime;
     public:
         static prof_t m_startTime;
         Time();

@@ -1,3 +1,4 @@
+#include <Particule/Core/Audio/Audio.hpp>
 #include <Particule/Core/Audio/Sound.hpp>
 #include <Particule/Core/Font/Font.hpp>
 #include <Particule/Core/Graphics/Image/Sprite.hpp>
