@@ -33,10 +33,10 @@ namespace Particule::Core
             : r(r), g(g), b(b), a(a), color(Pack(r, g, b, a)) {}
     
         constexpr Color(ColorRaw raw)
-            : a(raw & 0xFF),
-            b((raw >> 8) & 0xFF),
+            : r((raw >> 24) & 0xFF),
             g((raw >> 16) & 0xFF),
-            r((raw >> 24) & 0xFF),
+            b((raw >> 8)  & 0xFF),
+            a(raw & 0xFF),
             color(raw) {}
     
         constexpr Color(const Color& other)
@@ -74,17 +74,13 @@ namespace Particule::Core
         inline void SetR(unsigned char red)   { r = red; color = Pack(r, g, b, a); }
         inline void SetG(unsigned char green) { g = green; color = Pack(r, g, b, a); }
         inline void SetB(unsigned char blue)  { b = blue; color = Pack(r, g, b, a); }
-        inline void SetA(unsigned char alpha) { a = alpha; }
+        inline void SetA(unsigned char alpha) { a = alpha; color = Pack(r, g, b, a); }
     
         // Opérateurs de comparaison
-        constexpr bool operator==(const Color& other) const {
-            return color == other.color && a == other.a;
-        }
-    
-        constexpr bool operator!=(const Color& other) const {
-            return !(*this == other);
-        }
-    
+        constexpr bool operator==(const Color& other) const { return color == other.color; }
+
+        constexpr bool operator!=(const Color& other) const { return !(*this == other); }
+
         // Destructeur trivial
         ~Color() = default;
 

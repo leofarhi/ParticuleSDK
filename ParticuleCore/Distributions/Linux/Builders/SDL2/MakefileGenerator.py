@@ -20,7 +20,8 @@ class MakefileGenerator:
         self.include_paths = self.config["include_paths"]
         self.source_files = self.config["source_files"]
         self.defines = self.config.get("defines", {})
-        self.flags = self.config.get("flags", "")
+        self.compile_flags = self.config.get("compile_flags", "")
+        self.link_flags = self.config.get("link_flags", "")
 
     def generate_makefile(self) -> None:
         include_dirs = self._collect_include_dirs()
@@ -33,9 +34,9 @@ class MakefileGenerator:
         makefile = f"""\
 CC = g++
 CPPFLAGS = -MMD
-CFLAGS = -std=c++20 -fcoroutines -D_GNU_SOURCE {define_flags} {self.flags} {include_flags} `pkg-config --cflags sdl2 SDL2_image SDL2_ttf`
+CFLAGS = -std=c++20 -fcoroutines -D_GNU_SOURCE {define_flags} {self.compile_flags} {include_flags} `pkg-config --cflags sdl2 SDL2_image SDL2_ttf`
 LDFLAGS =
-LDLIBS = -lm `pkg-config --libs sdl2 SDL2_image SDL2_ttf`
+LDLIBS = -lm `pkg-config --libs sdl2 SDL2_image SDL2_ttf` {self.link_flags}
 
 OUTPUT = bin
 BUILD_DIR = build

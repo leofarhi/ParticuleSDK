@@ -169,7 +169,7 @@ void Audio::_FillStream(Uint8* out, int len) noexcept {
         return;
     }
 
-    const int16_t* src = reinterpret_cast<const int16_t*>(_wavBuffer);
+    //const int16_t* src = reinterpret_cast<const int16_t*>(_wavBuffer);
     const Uint64 totalFrames = _totalFrames;
     const Uint32 bytesPerFrame = _bytesPerFrame;
     const int srcChannels = _srcSpec.channels;

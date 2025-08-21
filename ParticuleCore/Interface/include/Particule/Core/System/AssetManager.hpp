@@ -64,7 +64,7 @@ public:
     template<typename T>
     static void SetupLoaders(uint32_t id)
     {
-        assert(id != -1 && "Invalid Asset ID");
+        assert(id != std::numeric_limits<uint32_t>::max() && "Invalid Asset ID");
         AssetManager::InitAssetManager();
         assert(id < builtInAssetCount + EXTERNAL_ASSET_COUNT && "Asset ID out of range");
         if (id < builtInAssetCount)

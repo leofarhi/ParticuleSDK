@@ -17,7 +17,7 @@ namespace Particule::Core
         Rect rect;
     public:
         Sprite() = default;
-        Sprite(Asset<Texture> asset_texture, Rect rect) : texture(texture), rect(rect) {}
+        Sprite(Asset<Texture> asset_texture, Rect rect) : texture(std::move(asset_texture)), rect(rect) {}
         Sprite(Texture* texture, Rect rect) : texture(texture), rect(rect) {}
         Sprite(uint32_t assetID, Rect rect) : texture(assetID), rect(rect) {}
         Sprite(const Sprite& other) = default;

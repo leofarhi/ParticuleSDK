@@ -110,7 +110,7 @@ namespace Particule::Engine {
                 loadedScenes.end());
             to_unload.clear();
             // Load requested
-            int st_call = loadedScenes.size();
+            size_t st_call = loadedScenes.size();
             for (int index : to_load) {
                 auto& loader = availableScenes[index];
                 // 1) Alloue la scène une seule fois avec le NOM source de vérité
@@ -124,7 +124,7 @@ namespace Particule::Engine {
             AssetManager::UnloadUnused();
             AssetManager::LoadUsed();
             //pour chaque scène chargée, appelle les composants Awake, OnEnable et Start
-            for (int st = st_call; st < loadedScenes.size(); ++st)
+            for (size_t st = st_call; st < loadedScenes.size(); ++st)
             {
                 auto& up = loadedScenes[st];
                 if (up)

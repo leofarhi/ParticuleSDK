@@ -9,8 +9,15 @@ namespace Particule::Engine {
     GameObject::GameObject(Scene *scene): GameObject(scene, "GameObject")
     {}
 
-    GameObject::GameObject(Scene *scene, std::string name):
-        m_activeSelf(true), scene(scene), transform(*this), name(name), components(), layer(Layer::LAYER_Default), tag(Tag::TAG_Untagged), isStatic(false)
+    GameObject::GameObject(Scene *scene, std::string name)
+        : m_activeSelf(true)
+        , scene(scene)
+        , components()                       // 3) matches declaration
+        , transform(*this)                   // 4)
+        , name(std::move(name))              // 5) take by value, move into member
+        , layer(Layer::LAYER_Default)        // 6)
+        , tag(Tag::TAG_Untagged)             // 7)
+        , isStatic(false)                    // 8)
     {}
 
     GameObject::~GameObject()

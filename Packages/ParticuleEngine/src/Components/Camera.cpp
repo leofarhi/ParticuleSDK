@@ -19,7 +19,6 @@ namespace Particule::Engine {
 
     void Camera::Render()
     {
-        Window* window = Window::GetCurrentWindow();
         SceneManager* manager = SceneManager::sceneManager;
         manager->activeScene()->DrawSky();
         manager->CallAllComponents(&Component::OnRenderObject, false, this);
