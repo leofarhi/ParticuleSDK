@@ -155,7 +155,7 @@ class SpriteEditor:
         self.image = Image.open(path).convert("RGBA")
         self.update_scaled_image()
         #enabling the save button
-        self.file_menu.entryconfig("Sauvegarder sprites", state=tk.NORMAL)
+        self.file_menu.entryconfig("Sauvegarder Sprites", state=tk.NORMAL)
 
     def update_scaled_image(self):
         if self.image:
@@ -350,7 +350,7 @@ class SpriteEditor:
             self.update_scaled_image()
             self.sprites = data
             #enabling the save button
-            self.file_menu.entryconfig("Sauvegarder sprites", state=tk.NORMAL)
+            self.file_menu.entryconfig("Sauvegarder Sprites", state=tk.NORMAL)
 
     def snap_to_grid(self, screen_pos):
         return self.world_to_screen(self.screen_to_world(screen_pos))
