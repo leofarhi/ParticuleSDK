@@ -6,6 +6,7 @@
 #include <Particule/Core/System/Window.hpp>
 #include <Particule/Core/System/Basic.hpp>
 #include <Particule/Core/System/AssetManager.hpp>
+#include <Particule/Core/Types/Fixed.hpp>
 #include <string>
 
 namespace Particule::Core
@@ -56,6 +57,11 @@ namespace Particule::Core
         FORCE_INLINE void DrawSize(int x, int y, int w, int h)
         {
             texture->DrawSubSize(x, y, w, h, rect);
+        }
+
+        FORCE_INLINE void DrawScaled(int x, int y, fixed12_32 scaleX, fixed12_32 scaleY)
+        {
+            texture->DrawSubSize(x, y, static_cast<int>(rect.w * scaleX), static_cast<int>(rect.h * scaleY), rect);
         }
 
         FORCE_INLINE void DrawColor(int x, int y, const Color& color)

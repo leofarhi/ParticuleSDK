@@ -14,6 +14,8 @@ namespace Particule::Engine {
         static CoroutineManager& instance();
 
     private:
+        CoroutineManager();
+        ~CoroutineManager() = default;
         std::vector<std::unique_ptr<Coroutine>> coroutines;
     };
 

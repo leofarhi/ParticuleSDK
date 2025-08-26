@@ -1,4 +1,5 @@
 #include <Particule/Engine/Scene/Scene.hpp>
+#include <Particule/Engine/Scene/SceneManager.hpp>
 #include <algorithm>
 
 namespace Particule::Engine {
@@ -8,6 +9,11 @@ namespace Particule::Engine {
         // unique_ptr cleans up automatically
         toRemove_.clear();
         gameObjects_.clear();
+    }
+
+    void Scene::ToInitialize(GameObject* go) noexcept
+    {
+        SceneManager::sceneManager->to_initialize_.insert(go);
     }
 
     void Scene::DrawSky() noexcept
@@ -62,6 +68,7 @@ namespace Particule::Engine {
     {
         if (!go || go->scene != this) return;
         toRemove_.push_back(go);
+        SceneManager::sceneManager->to_initialize_.erase(go);
     }
 
     GameObject* Scene::FindGameObject(std::string_view nm) const noexcept

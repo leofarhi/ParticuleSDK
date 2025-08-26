@@ -32,6 +32,8 @@ namespace Particule::Core
 
             bool operator==(const Color &other) const;
             bool operator!=(const Color &other) const;
+
+            static Color FromHex(unsigned int hexValue);
             
             static Color Black;
             static Color White;

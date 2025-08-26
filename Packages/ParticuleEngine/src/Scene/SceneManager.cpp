@@ -8,7 +8,7 @@ namespace Particule::Engine {
 
     SceneManager* SceneManager::sceneManager = nullptr;
 
-    SceneManager::SceneManager() noexcept
+    SceneManager::SceneManager() : availableScenes(0), loadedScenes(0), to_load(0), to_unload(0), to_initialize_(0), loading(false)
     {
         SceneManager::sceneManager = this;
     }
@@ -18,6 +18,8 @@ namespace Particule::Engine {
         to_unload.clear();
         to_load.clear();
         loadedScenes.clear();
+        to_initialize_.clear();
+        SceneManager::sceneManager = nullptr;
         AssetManager::UnloadUnused();
     }
 
@@ -127,6 +129,7 @@ namespace Particule::Engine {
             for (size_t st = st_call; st < loadedScenes.size(); ++st)
             {
                 auto& up = loadedScenes[st];
+                up->isLoaded = true;
                 if (up)
                 {
                     up->CallAllComponents(&Component::Awake, true);
@@ -137,6 +140,16 @@ namespace Particule::Engine {
             to_load.clear();
             loading = false;
         }
+
+        // Initialize all GameObjects marked for initialization
+        for (GameObject* go : to_initialize_) {
+            if (go) {
+                go->CallComponents(&Component::Awake, true);
+                go->CallComponents(&Component::OnEnable, false);
+                go->CallComponents(&Component::Start, false);
+            }
+        }
+        to_initialize_.clear();
 
         CallAllComponents(&Component::FixedUpdate, false);
         CallAllComponents(&Component::Update, false);

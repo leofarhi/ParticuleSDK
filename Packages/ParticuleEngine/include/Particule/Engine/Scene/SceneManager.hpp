@@ -27,12 +27,14 @@ namespace Particule::Engine {
         std::vector<std::unique_ptr<Scene>> loadedScenes;   // ownership here
         std::unordered_set<int> to_load;
         std::unordered_set<Scene*> to_unload;               // non-owning markers
-        bool loading { false };
+        std::unordered_set<GameObject*> to_initialize_;
+        bool loading;
 
+        friend class Scene;
     public:
         static SceneManager* sceneManager;
 
-        SceneManager() noexcept;
+        SceneManager();
         ~SceneManager() noexcept;
 
         bool isRunning() const noexcept;

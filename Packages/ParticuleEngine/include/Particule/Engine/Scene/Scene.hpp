@@ -37,13 +37,16 @@ namespace Particule::Engine {
 
         // Called once per frame by SceneManager
         void EndMainLoop();
+        void ToInitialize(GameObject* go) noexcept;
+
+        bool isLoaded;
         friend class SceneManager;
     public:
         std::string name;
-        bool enabled {true};
-        Skybox skybox { Color::Blue, Color::Cyan };
+        bool enabled;
+        Skybox skybox;
 
-        explicit Scene(std::string name) : name(std::move(name)) {}
+        explicit Scene(std::string name) : gameObjects_(0), toRemove_(0), isLoaded(false), name(std::move(name)), enabled(true), skybox(Color::Blue, Color::Cyan) {}
         ~Scene() noexcept;
 
         void DrawSky() noexcept;
@@ -67,10 +70,11 @@ namespace Particule::Engine {
         template<typename Method, typename... Args>
         void CallAllComponents(Method method, bool includeInactive, Args&&... args)
         {
-            for (auto& up : gameObjects_) {
-                GameObject* go = up.get();
+            for (size_t i = 0; i < gameObjects_.size(); i++)
+            {
+                GameObject* go = gameObjects_[i].get();
                 if (includeInactive || go->activeInHierarchy())
-                    go->CallComponent(method, includeInactive, std::forward<Args>(args)...);
+                    go->CallComponents(method, includeInactive, std::forward<Args>(args)...);
             }
         }
 
@@ -83,6 +87,8 @@ namespace Particule::Engine {
             auto ptr = std::make_unique<TGO>(this, std::forward<Args>(args)...);
             TGO* raw = ptr.get();
             AddGameObject(std::move(ptr)); // adoption ownership et association à la scène
+            if (isLoaded)
+                ToInitialize(raw);
             return raw;
         }
         

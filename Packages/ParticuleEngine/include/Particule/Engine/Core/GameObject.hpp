@@ -67,7 +67,7 @@ namespace Particule::Engine {
         [[nodiscard]] std::vector<const T_Component*> GetComponents() const;
 
         template<typename Method, typename... Args>
-        void CallComponent(Method method, bool includeInactive, Args&&... args);
+        void CallComponents(Method method, bool includeInactive, Args&&... args);
 
     };
 

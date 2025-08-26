@@ -45,8 +45,8 @@ namespace Particule::Engine {
 
         // Notifie this si son état effectif change
         if (was != now) {
-            if (now) CallComponent(&Component::OnEnable, false);
-            else     CallComponent(&Component::OnDisable, false);
+            if (now) CallComponents(&Component::OnEnable, false);
+            else     CallComponents(&Component::OnDisable, false);
         } else {
             // Si rien ne change pour this, rien ne change pour les descendants
             return;
@@ -63,8 +63,8 @@ namespace Particule::Engine {
                 const bool childNow  = parentNow && childSelf;
 
                 if (childWas != childNow) {
-                    if (childNow) child->CallComponent(&Component::OnEnable, false);
-                    else          child->CallComponent(&Component::OnDisable, false);
+                    if (childNow) child->CallComponents(&Component::OnEnable, false);
+                    else          child->CallComponents(&Component::OnDisable, false);
                 }
 
                 self(self, child, childWas, childNow);

@@ -80,6 +80,9 @@ namespace Particule::Engine {
                 co->stop();
         }
 
+        static void Destroy(Component* component);
+        static void Destroy(GameObject* obj);
+
     };
 
     template <typename T_Component, typename... Args>
@@ -138,11 +141,11 @@ namespace Particule::Engine {
     }
 
     template<typename Method, typename... Args>
-    void GameObject::CallComponent(Method method, bool includeInactive, Args&&... args)
+    void GameObject::CallComponents(Method method, bool includeInactive, Args&&... args)
     {
-        for (auto& up : components)
+        for (size_t i = 0; i < components.size(); i++)
         {
-            Component* c = up.get();
+            Component* c = components[i].get();
             if (includeInactive || c->enabled())
                 (c->*method)(std::forward<Args>(args)...);
         }

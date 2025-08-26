@@ -81,6 +81,14 @@ namespace Particule::Core
         // Destructeur trivial
         ~Color() = default;
 
+        static inline Color FromHex(unsigned int hexValue)
+        {
+            unsigned char r = (hexValue >> 16) & 0xFF;
+            unsigned char g = (hexValue >> 8) & 0xFF;
+            unsigned char b = hexValue & 0xFF;
+            return Color(r, g, b, 255);
+        }
+
         static Color Black;
         static Color White;
         static Color Alpha;

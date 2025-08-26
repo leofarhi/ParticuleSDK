@@ -3,6 +3,8 @@
 
 namespace Particule::Engine {
 
+    CoroutineManager::CoroutineManager() : coroutines(0) {}
+
     Coroutine* CoroutineManager::start(Coroutine&& co) {
         coroutines.emplace_back(std::make_unique<Coroutine>(std::move(co)));
         return coroutines.back().get();
