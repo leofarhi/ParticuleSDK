@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <atomic>
 #include <memory>
+#include <utility>
 
 namespace Particule::Core {
     extern void* __builtInAssetsRaw[];
@@ -169,67 +170,153 @@ public:
 template<typename T>
 class Asset {
 public:
-    constexpr Asset() : id(-1), external(false), ptr(nullptr) {}
+    // Par défaut : invalide
+    Asset() noexcept
+        : id_(kInvalid), external_(false), ptr_(nullptr) {}
 
-    // Asset avec ID
-    constexpr Asset(uint32_t id_) : id(id_), external(false) {
-        if (id != uint32_t(-1)) {
+    // Asset géré par l'AssetManager via un ID
+    Asset(uint32_t id)
+        : id_(kInvalid), external_(false), ptr_(nullptr)
+    {
+        if (id != kInvalid) {
+            AssetManager::InitAssetManager();
             AssetManager::IncrementRef(id);
             AssetManager::SetupLoaders<T>(id);
-            ptr = AssetManager::Get<T>(id);
+            id_  = id;
+            ptr_ = AssetManager::Get<T>(id);
         }
     }
 
-    // Asset direct (non géré par AssetManager)
-    constexpr Asset(T* directPtr) : id(-1), external(true) {
-        ptr = new T*(directPtr);  // on simule le T** pour uniformité
+    // Asset "direct" (non géré) : on alloue notre propre T** qui pointe vers le T* fourni
+    Asset(T* directPtr)
+        : id_(kInvalid), external_(true), ptr_(nullptr)
+    {
+        ptr_ = new T*(directPtr); // T** privé et indépendant
     }
 
-    Asset(const Asset& other) : id(other.id), external(other.external), ptr(other.ptr) {
-        if (!external && id != uint32_t(-1)) AssetManager::IncrementRef(id);
+    // --- Copie ---
+    Asset(const Asset& other)
+        : id_(kInvalid), external_(other.external_), ptr_(nullptr)
+    {
+        if (external_) {
+            // Deep-copy du T** (on duplique le conteneur, pas l'objet T)
+            T* raw = other.Get();           // peut être nullptr
+            ptr_ = new T*(raw);             // nouveau T** indépendant
+        } else {
+            // Copie "gérée"
+            id_  = other.id_;
+            ptr_ = other.ptr_;
+            if (IsManaged()) AssetManager::IncrementRef(id_);
+        }
     }
 
-    Asset& operator=(const Asset& other) {
-        if (this != &other) {
-            if (!external && id != uint32_t(-1)) AssetManager::DecrementRef(id);
-            id = other.id;
-            external = other.external;
-            ptr = other.ptr;
-            if (!external && id != uint32_t(-1)) AssetManager::IncrementRef(id);
+    // --- Move ---
+    Asset(Asset&& other) noexcept
+        : id_(other.id_), external_(other.external_), ptr_(other.ptr_)
+    {
+        // On neutralise l'autre pour éviter double free / double decrement
+        other.id_      = kInvalid;
+        other.external_= false;
+        other.ptr_     = nullptr;
+    }
+
+    // --- Affectation par copie ---
+    Asset& operator=(const Asset& other)
+    {
+        if (this == &other) return *this;
+
+        // Libère ce que l'on détient actuellement
+        release_();
+
+        // Reprend depuis "other"
+        external_ = other.external_;
+        if (external_) {
+            // Deep-copy de son T** (container), même si le T* à l'intérieur est nul
+            T* raw = other.Get();
+            ptr_ = new T*(raw);
+            id_  = kInvalid;
+        } else {
+            id_  = other.id_;
+            ptr_ = other.ptr_;
+            if (IsManaged()) AssetManager::IncrementRef(id_);
         }
         return *this;
     }
 
-    ~Asset() {
-        if (!external && id != uint32_t(-1)) AssetManager::DecrementRef(id);
-        if (external && ptr) {
-            delete ptr; // libère le T**
-            ptr = nullptr;
+    // --- Affectation par move ---
+    Asset& operator=(Asset&& other) noexcept
+    {
+        if (this == &other) return *this;
+
+        release_();
+
+        id_       = other.id_;
+        external_ = other.external_;
+        ptr_      = other.ptr_;
+
+        other.id_        = kInvalid;
+        other.external_  = false;
+        other.ptr_       = nullptr;
+
+        return *this;
+    }
+
+    ~Asset()
+    {
+        release_();
+    }
+
+    // -------- API --------
+    bool operator==(const Asset& other) const noexcept { return Get() == other.Get(); }
+    bool operator!=(const Asset& other) const noexcept { return !(*this == other);   }
+
+    bool IsValid()  const noexcept { return ptr_ != nullptr; }
+    bool IsLoaded() const noexcept { return ptr_ && *ptr_ != nullptr; }
+
+    void Load()
+    {
+        if (IsManaged() && ptr_ && *ptr_ == nullptr) {
+            AssetManager::Load<T>(id_);
         }
     }
 
-    inline bool operator==(const Asset& other) const { return ptr == other.ptr; }
-    inline bool operator!=(const Asset& other) const { return ptr != other.ptr; }
+    T* operator->() const { return *ptr_; }
+    T& operator* () const { return **ptr_; }
 
-    inline bool IsValid() const { return ptr != nullptr; }
-    inline bool IsLoaded() const { return ptr && *ptr != nullptr; }
+    uint32_t GetID() const noexcept { return id_; }
+    T*       Get()   const noexcept { return ptr_ ? *ptr_ : nullptr; }
 
-    inline void Load() {
-        if (!external && !*ptr && id != uint32_t(-1)) {
-            AssetManager::Load<T>(id);
-        }
+    // utilitaires
+    void Swap(Asset& other) noexcept
+    {
+        std::swap(id_, other.id_);
+        std::swap(external_, other.external_);
+        std::swap(ptr_, other.ptr_);
     }
-
-    inline T* operator->() const { return *ptr; }
-    inline T& operator* () const { return **ptr; }
-
-    constexpr uint32_t GetID() const { return id; }
-    inline T* Get() const { return *ptr; }
 
 private:
-    uint32_t id;
-    bool external;
-    T** ptr;
+    static constexpr uint32_t kInvalid = uint32_t(-1);
+
+    bool IsManaged() const noexcept { return !external_ && id_ != kInvalid; }
+
+    void release_() noexcept
+    {
+        if (IsManaged()) {
+            AssetManager::DecrementRef(id_);
+            // Ne pas toucher à ptr_ : c'est géré par l'AssetManager
+        } else if (external_ && ptr_) {
+            // Nous possédons le T** (pas le T* pointé)
+            delete ptr_;
+        }
+        id_       = kInvalid;
+        external_ = false;
+        ptr_      = nullptr;
+    }
+
+private:
+    uint32_t id_;
+    bool     external_;
+    T**      ptr_;
 };
 
 

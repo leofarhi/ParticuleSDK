@@ -21,8 +21,16 @@ namespace Particule::Core
         Sprite(Asset<Texture> asset_texture, Rect rect) : texture(std::move(asset_texture)), rect(rect) {}
         Sprite(Texture* texture, Rect rect) : texture(texture), rect(rect) {}
         Sprite(uint32_t assetID, Rect rect) : texture(assetID), rect(rect) {}
-        Sprite(const Sprite& other) = default;
-        Sprite& operator=(const Sprite& other) = default;
+        Sprite(const Sprite& other) : texture(other.texture), rect(other.rect) {}
+        Sprite& operator=(const Sprite& other)
+        {
+            if (this != &other)
+            {
+                texture = other.texture;
+                rect = other.rect;
+            }
+            return *this;
+        }
         ~Sprite() = default;
 
         inline void SetRect(Rect rect)
@@ -40,6 +48,11 @@ namespace Particule::Core
         FORCE_INLINE Texture* GetTexture()
         {
             return texture.Get();
+        }
+
+        FORCE_INLINE Asset<Texture> GetAssetTexture() const
+        {
+            return texture;
         }
 
         FORCE_INLINE Rect GetRect() const

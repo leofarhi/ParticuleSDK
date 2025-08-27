@@ -129,13 +129,13 @@ namespace Particule::Engine {
             for (size_t st = st_call; st < loadedScenes.size(); ++st)
             {
                 auto& up = loadedScenes[st];
-                up->isLoaded = true;
                 if (up)
                 {
                     up->CallAllComponents(&Component::Awake, true);
                     up->CallAllComponents(&Component::OnEnable, false);
                     up->CallAllComponents(&Component::Start, false);
                 }
+                up->isLoaded = true;
             }
             to_load.clear();
             loading = false;
