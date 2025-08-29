@@ -29,10 +29,13 @@ namespace Particule::Core
     }
 
     File* File::Open(const std::string& path, FileMode mode, Endian endian) {
+        gint_wswitch_enter();
         FILE* file = File::open_file(path, mode);
         if (!file)
+        {
+            gint_wswitch_exit();
             return nullptr;
-        gint_wswitch_enter();
+        }
         return new File(file, mode, endian);
     }
 
