@@ -16,6 +16,12 @@ namespace Particule::Engine {
         SceneManager::sceneManager->to_initialize_.insert(go);
     }
 
+    bool Scene::IsNotInitialized(GameObject* go) const noexcept
+    {
+        //return true if the game object is in to_initialize_
+        return SceneManager::sceneManager->to_initialize_.find(go) != SceneManager::sceneManager->to_initialize_.end();
+    }
+
     void Scene::DrawSky() noexcept
     {
         Window* window = Window::GetCurrentWindow();

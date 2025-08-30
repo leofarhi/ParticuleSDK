@@ -38,6 +38,7 @@ namespace Particule::Engine {
         // Called once per frame by SceneManager
         void EndMainLoop();
         void ToInitialize(GameObject* go) noexcept;
+        bool IsNotInitialized(GameObject* go) const noexcept;
 
         bool isLoaded;
         friend class SceneManager;
@@ -73,6 +74,8 @@ namespace Particule::Engine {
             for (size_t i = 0; i < gameObjects_.size(); i++)
             {
                 GameObject* go = gameObjects_[i].get();
+                if (IsNotInitialized(go))
+                    continue;
                 if (includeInactive || go->activeInHierarchy())
                     go->CallComponents(method, includeInactive, std::forward<Args>(args)...);
             }
